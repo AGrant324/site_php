@@ -8,7 +8,7 @@ require_once "v1_webpageroutines.php";
 Get_Common_Parameters();
 Set_Statics();
 
-# ============= read input ================================
+# ============= read input ==================================
 print "Content-type: text/html\n\n";
 
 $insitename = $_REQUEST['SiteName'];
