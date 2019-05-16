@@ -1,6 +1,8 @@
 <?php # xhtmlroutines
 
 // ------------- XHTML subroutines -----------------------------------------
+
+//This is a new comment
 function XDOCTYPE () { echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'."\n";}
 function XHTML () { echo '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">'."\n";}
 function X_HTML () { echo '</html>'."\n"; }
