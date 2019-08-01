@@ -3,16 +3,15 @@
 // last app version 29
 
 function Dmws_DMWSSULIST_CSSJS () {
-	$GLOBALS{'SITECSSOPTIONAL'} = "jqdatatables,dmwssuupdate,jqueryconfirm";	
+	$GLOBALS{'SITECSSOPTIONAL'} = "jqdatatables,dmwssuupdate,jqueryconfirm";
 	$GLOBALS{'SITEJSOPTIONAL'} = "globalroutines,ioroutines,jqdatatablesmin,jqueryconfirm,report,dmwssulist";
 }
 
 function Dmws_DMWSSULIST_Output($openclosed) {
-
     if ( $GLOBALS{'site_clientservermode'} == "Client") { $openclosed = "Open"; } // just to be sure
-    XH2("My ".$openclosed." Cases - ".$GLOBALS{'person_fname'}." ".$GLOBALS{'person_sname'});	
+    XH2("My ".$openclosed." Cases - ".$GLOBALS{'person_fname'}." ".$GLOBALS{'person_sname'});
 	XBR();XBR();
-	BROW();	
+	BROW();
 	if ( $openclosed == "Open") {
     	BCOL("2");
     	XFORMUPLOAD("dmwssuupdateout.php","newsu");
@@ -37,7 +36,7 @@ function Dmws_DMWSSULIST_Output($openclosed) {
 	}
 	B_ROW();
 
-	XBR();XBR();	
+	XBR();XBR();
 
 	XINHID("ListStatus",$openclosed);
 	XDIV("reportdiv","container");
@@ -45,52 +44,71 @@ function Dmws_DMWSSULIST_Output($openclosed) {
 	XTHEAD();
 	XTRJQDT();
 	XTDHTXT("SU ref");
-	XTDHTXT("Name");	
+	XTDHTXT("Name");
 	XTDHTXT("Surname");
 	XTDHTXT("WO");
 	XTDHTXT("Issues");
 	XTDHTXT("Process Steps (Click to Select)");
 	if ( $GLOBALS{'site_clientservermode'} == "Client") {
 	   XTDHTXT("Updated");
-	}
-	if ( $GLOBALS{'site_clientservermode'} != "Client") {	
-	   if ( $openclosed == "Closed") {
+	}else{
+	   if ( $openclosed != "Open") {
 	       XTDHTXT("");
 	   }
 	}
 	XTDHTXT("");
+	XTDHTXT("Contract");
+	XTDHTXT("Location");
 	X_TR();
 	X_THEAD();
 	XTBODY();
 	XINHID("list_sortcol","0");
-
-	$dmwssua = Get_Array('dmwssu');
-	foreach ($dmwssua as $dmwssu_id) {
+	// $dmwssua = Get_Array('dmwssu'); //old version without filtration
+        $filtera = Array('dmwssu_casestatus',$openclosed);
+	$dmwssua = Get_Array_Select('dmwssu',$filtera,"dmwssu_id");
+        // $dmwssua = Get_Array_SelectX('dmwssu','dmwssu_casestatus',$openclosed,"dmwssu_id"); 
+	//tableName, filters, returnedFields
+	// foreach ($dmwssua[0] as $dmwssu_id) {
+	for ($i=0; $i < sizeof($dmwssua); $i++) {
+		$dmwssu_id = $dmwssua[$i][0];
 		Check_Data('dmwssu',$dmwssu_id);
 		Check_Data('dmwssux',$dmwssu_id);
-		if ($GLOBALS{'IOWARNING'} == "0") {			    
-    		$thiscasestatus = "Open";
-    		if (($GLOBALS{'dmwssu_casecloseddate'} != "" )&&($GLOBALS{'dmwssu_casecloseddate'} != "0000-00-00" )) { $thiscasestatus = "Closed"; }		    
+		if ($GLOBALS{'IOWARNING'} == "0") {
+		    switch ($GLOBALS{'dmwssu_casestatus'}){
+		        case open:
+		            $thiscasestatus = "Open";
+		            break;
+		        case closed:
+		            $thiscasestatus = "Closed";
+		            break;
+		        case archived:
+		            $thiscasestatus = "Archived";
+		            break;
+		    }
     		if ( $thiscasestatus == $openclosed ) {
     		    $include = "0";
-    		    $dmwscontractlocationa = Get_Array('dmwscontractlocation');
+    		    if(!isset($dmwscontractlocationa)){
+    		        //only loads the location once now
+    		        $dmwscontractlocationa = Get_Array('dmwscontractlocation');
+    		    }
     		    foreach ($dmwscontractlocationa as $dmwscontractlocation_id) {
     		        if ( $dmwscontractlocation_id == $GLOBALS{'dmwssu_dmwscontractlocationid'}) {
     		            Get_Data('dmwscontractlocation',$dmwscontractlocation_id);
+    		            //  Get_Data_Select('dmwscontractlocation',$dmwscontractlocation_id,'dmwssu_casestatus',$thiscasestatus);
     		            // XPTXT("MATCH|".$GLOBALS{'LOGIN_person_id'}."|".$GLOBALS{'dmwscontractlocation_officerlist'}."|");
     		            if ( FoundInCommaList( $GLOBALS{'LOGIN_person_id'}, $GLOBALS{'dmwscontractlocation_officerlist'} ) ) { $include = "1"; }
     		            if ( FoundInCommaList( $GLOBALS{'LOGIN_person_id'}, $GLOBALS{'dmwscontractlocation_mgrlist'} ) ) { $include = "1"; }
-    		            
+
     		        }
     		    }
     		    if ( FoundInCommaList( $GLOBALS{'LOGIN_person_id'}, $GLOBALS{'dmwssu_wopersonid'}) ) { $include = "1"; }
-    		    if ( FoundInCommaList( $GLOBALS{'LOGIN_person_id'}, $GLOBALS{'dmwssu_otherwopersonidlist'}) ) { $include = "1"; }   		    
+    		    if ( FoundInCommaList( $GLOBALS{'LOGIN_person_id'}, $GLOBALS{'dmwssu_otherwopersonidlist'}) ) { $include = "1"; }
     		    // if ( $GLOBALS{'person_userlevel'}  == "3" ) { $include = "1"; }
     		    if ( $GLOBALS{'person_userlevel'}  == "4" ) { $include = "1"; }
     		    if (strlen(strstr($GLOBALS{'person_authority'},"DM#Domain"))>0) { $include = "1"; }
     		    // if (strlen(strstr($GLOBALS{'dmwssu_dmwscontractlocationid'},"Test"))>0) { $include = "1"; }
     		    if (strlen(strstr($GLOBALS{'dmwssu_dmwscontractlocationid'},"Example"))>0) { $include = "1"; }
-    		    
+
     		    if ( $include == "1" ) {
     				XTRJQDT();
     				if (strlen(strstr($dmwssu_id,"New"))>0) {
@@ -100,13 +118,13 @@ function Dmws_DMWSSULIST_Output($openclosed) {
     				}
     				if (strlen(strstr($GLOBALS{'dmwssu_dmwscontractlocationid'},"Test"))>0) { $sustring = $sustring." (Test)"; }
     				if (strlen(strstr($GLOBALS{'dmwssu_dmwscontractlocationid'},"Example"))>0) { $sustring = $sustring." (Example)"; }
-    				XTDTXT($sustring);				
+    				XTDTXT($sustring);
     				XTDTXT($GLOBALS{'dmwssux_fname'});
     				XTDTXT($GLOBALS{'dmwssux_sname'});
     				XTDTXT($GLOBALS{'dmwssu_wopersonid'});
     				XTD();
-    
-    
+
+
     				$dmwswosafeguardingissuetypea = Get_Array('dmwswosafeguardingissuetype');
     				foreach ($dmwswosafeguardingissuetypea as $dmwswosafeguardingissuetype_id) {
     				    Get_Data('dmwswosafeguardingissuetype',$dmwswosafeguardingissuetype_id);
@@ -125,24 +143,24 @@ function Dmws_DMWSSULIST_Output($openclosed) {
     				        }
     				    }
     				}
-    				
+
     				if ( $GLOBALS{'dmwssu_dmwssupporttypeid'} ==  "Declined Support") {
     				    XINBUTTONIDSPECIALTOOLTIP("dmwssu_dmwssupporttypeid","info","Support Declined","Support Declined");
     				}
-    
+
     				X_TD();
     				XTD();
     				$dmwsvisita = Get_Array('dmwsvisit',$dmwssu_id);
     				$latestvisittype = "";
     				$latestvisitstatus = "";
     				foreach ($dmwsvisita as $dmwsvisit_id) {
-    					Get_Data('dmwsvisit',$dmwssu_id,$dmwsvisit_id);	
+    					Get_Data('dmwsvisit',$dmwssu_id,$dmwsvisit_id);
     					$latestvisittype = $GLOBALS{'dmwsvisit_type'};
     					$latestvisitstatus = $GLOBALS{'dmwsvisit_status'};
-    					if ($GLOBALS{'dmwsvisit_status'} == "Completed" ) {    
-    					    $visiticon = ' <span><i class="fa fa-check-circle-o"></i></span>';			    
+    					if ($GLOBALS{'dmwsvisit_status'} == "Completed" ) {
+    					    $visiticon = ' <span><i class="fa fa-check-circle-o"></i></span>';
     					} else {
-    					    $visiticon = "";		    
+    					    $visiticon = "";
     					}
     					// XPTXT($dmwssu_id."|".$dmwsvisit_id.$GLOBALS{'dmwsvisit_type'});
     					$visitdate = $GLOBALS{'dmwsvisit_date'};
@@ -157,15 +175,15 @@ function Dmws_DMWSSULIST_Output($openclosed) {
         						$link = YPGMLINK("dmwssuupdateout.php");
         						$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","Subsequent").YPGMPARM("VisitId",$dmwsvisit_id);
         						XLINKBUTTONSPECIALTOOLTIP($link,"Su".$visiticon,"SuOn",VisitToolTipText($dmwsvisit_id));
-        					}					
+        					}
         					if ($GLOBALS{'dmwsvisit_type'} == "Discharge" ) {
         						$link = YPGMLINK("dmwssuupdateout.php");
-        						$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","Discharge").YPGMPARM("VisitId",$dmwsvisit_id);						
+        						$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","Discharge").YPGMPARM("VisitId",$dmwsvisit_id);
         						XLINKBUTTONSPECIALTOOLTIP($link,"Di".$visiticon,"DiOn",VisitToolTipText($dmwsvisit_id));
         					}
         					if ($GLOBALS{'dmwsvisit_type'} == "FollowUp" ) {
         						$link = YPGMLINK("dmwssuupdateout.php");
-        						$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","FollowUp").YPGMPARM("VisitId",$dmwsvisit_id);						
+        						$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","FollowUp").YPGMPARM("VisitId",$dmwsvisit_id);
         						XLINKBUTTONSPECIALTOOLTIP($link,"Fo".$visiticon,"FoOn",VisitToolTipText($dmwsvisit_id));
         					}
     					}
@@ -194,29 +212,29 @@ function Dmws_DMWSSULIST_Output($openclosed) {
     				}
     				if ($latestvisittype == "" ) {
     					$link = YPGMLINK("dmwssuupdateout.php");
-    					$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","First").YPGMPARM("VisitId","New");					
+    					$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","First").YPGMPARM("VisitId","New");
     					XLINKBUTTONSPECIALTOOLTIP($link,"Fi","FiOff","New Visit");
     				}
     				if ($latestvisitstatus == "Completed" ) {
         				if ($latestvisittype == "First" ) {
         					$link = YPGMLINK("dmwssuupdateout.php");
-        					$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","Subsequent").YPGMPARM("VisitId","New");					
+        					$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","Subsequent").YPGMPARM("VisitId","New");
         					XLINKBUTTONSPECIALTOOLTIP($link,"Su","SuOff","New Visit");
         					$link = YPGMLINK("dmwssuupdateout.php");
         					$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","Discharge").YPGMPARM("VisitId","New");
         					XLINKBUTTONSPECIALTOOLTIP($link,"Di","DiOff","New Visit");
-        				}					
+        				}
         				if ($latestvisittype == "Subsequent" ) {
         					$link = YPGMLINK("dmwssuupdateout.php");
         					$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","Subsequent").YPGMPARM("VisitId","New");
         					XLINKBUTTONSPECIALTOOLTIP($link,"Su","SuOff","New Visit");
         					$link = YPGMLINK("dmwssuupdateout.php");
-        					$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","Discharge").YPGMPARM("VisitId","New");								
+        					$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","Discharge").YPGMPARM("VisitId","New");
         					XLINKBUTTONSPECIALTOOLTIP($link,"Di","DiOff","New Visit");
-        				}					
+        				}
         				if ($latestvisittype == "Discharge" ) {
         					$link = YPGMLINK("dmwssuupdateout.php");
-        					$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","FollowUp").YPGMPARM("VisitId","New");				
+        					$link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("VisitType","FollowUp").YPGMPARM("VisitId","New");
         					XLINKBUTTONSPECIALTOOLTIP($link,"Fo","FoOff","New Visit");
         				}
     				}
@@ -225,28 +243,28 @@ function Dmws_DMWSSULIST_Output($openclosed) {
     				    if ($GLOBALS{'dmwssu_clientupdatetimestamp'} != "" ) {
     				        if ( strpos($GLOBALS{'dmwssu_clientupdatetimestamp'}, '(No Synch)') !== false ) {
                                 $sbits = explode("(",$GLOBALS{' '});
-                                XTD();XTXTIDCLASS('dmwssu_clientupdatetimestamp_'.$dmwssu_id,"clientupdatetimestamp",TimestamptoDDMMMbHHcMM($sbits[0])."(".$sbits[1]);X_TD(); 	
+                                XTD();XTXTIDCLASS('dmwssu_clientupdatetimestamp_'.$dmwssu_id,"clientupdatetimestamp",TimestamptoDDMMMbHHcMM($sbits[0])."(".$sbits[1]);X_TD();
     				        } else {
     				            XTD();XTXTIDCLASS('dmwssu_clientupdatetimestamp_'.$dmwssu_id,"clientupdatetimestamp",TimestamptoDDMMMbHHcMM($GLOBALS{'dmwssu_clientupdatetimestamp'}));X_TD();
-    				        }				        
+    				        }
     				    } else {
     				        XTDTXT("");
     				    }
     				}
     				if ( $GLOBALS{'site_clientservermode'} != "Client") {
-    				    if ( $openclosed == "Closed") {
+    				    if ( $openclosed != "Open") {
     				        $link = YPGMLINK("dmwssureplicateconfirm.php");
     				        $link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("List","DMWSSULIST").YPGMPARM("ListStatus",$openclosed);
-    				        XTDLINKTXT($link,"new case");	
+    				        XTDLINKTXT($link,"new case");
     				    }
     				}
-    				
+
     				$deleteallowed = "0";
     				if ( $GLOBALS{'person_userlevel'}  == "1" ) {  // CHECK
     				    if (strlen(strstr($GLOBALS{'dmwssu_dmwscontractlocationid'},"Example"))>0) {} else { $deleteallowed = "1"; }
     				}
-    				if ( $GLOBALS{'person_userlevel'}  == "2" ) { 				    
-    				    if (strlen(strstr($GLOBALS{'dmwssu_dmwscontractlocationid'},"Example"))>0) {} else { $deleteallowed = "1"; }				    
+    				if ( $GLOBALS{'person_userlevel'}  == "2" ) {
+    				    if (strlen(strstr($GLOBALS{'dmwssu_dmwscontractlocationid'},"Example"))>0) {} else { $deleteallowed = "1"; }
     				}
     				if ( $GLOBALS{'person_userlevel'}  == "4" ) { $deleteallowed = "1"; }
     				if ( $GLOBALS{'site_clientservermode'} == "Client") {
@@ -255,10 +273,12 @@ function Dmws_DMWSSULIST_Output($openclosed) {
     				if ( $deleteallowed == "1" ) {
     				    $link = YPGMLINK("dmwssudeleteconfirm.php");
     				    $link = $link.YPGMSTDPARMS().YPGMPARM("dmwssu_id",$dmwssu_id).YPGMPARM("List","DMWSSULIST").YPGMPARM("ListStatus",$openclosed);
-    				    XTDLINKTXT($link,"delete");				    
+    				    XTDLINKTXT($link,"delete");
     				} else {
                         XTDTXT("");
-    				}			
+    				}
+    				XTDTXT($GLOBALS{'dmwssu_dmwscontractid'});
+    				XTDTXT($GLOBALS{'dmwssu_dmwscontractlocationid'});
     				X_TR();
     			}
             }
@@ -277,12 +297,12 @@ function Dmws_DMWSSUUPDATE_CSSJS () {
 }
 
 function Dmws_DMWSSUUPDATE_Output($thisdmwssu_id, $thisvisittype, $thisvisitid ,$currenttab) {
-    
+
     // if New SU  $thisdmwssu_id="New", $thisvisittype="First", $thisvisitid="New"
     // if New Visit  $thisdmwssu_id="SUId", $thisvisittype="First", $thisvisitid="New"
-    
+
     if ( $thisvisittype == "undefined" ) { $thisvisittype = "Subsequent"; } // CHECK VISIT
-	
+
 	Check_Data('dmwssu', $thisdmwssu_id);
 	if ($GLOBALS{'IOWARNING'} == "0") {
 	    Get_Data('dmwssux', $thisdmwssu_id);
@@ -292,17 +312,17 @@ function Dmws_DMWSSUUPDATE_Output($thisdmwssu_id, $thisvisittype, $thisvisitid ,
 	} else {
 	    if ($thisdmwssu_id == "New") {
 	        Initialise_Data('dmwssu');
-	        Initialise_Data('dmwssux'); 
+	        Initialise_Data('dmwssux');
 	        $headingtext = "New Service User";
 	        $GLOBALS{'dmwssu_id'} = "New";
 	        $GLOBALS{'dmwssu_wopersonid'} = $GLOBALS{'LOGIN_person_id'};
-	        $GLOBALS{'dmwssu_woname'} = $GLOBALS{'person_fname'}." ".$GLOBALS{'person_sname'};   
-	    } else {       
+	        $GLOBALS{'dmwssu_woname'} = $GLOBALS{'person_fname'}." ".$GLOBALS{'person_sname'};
+	    } else {
 	        XH1("Error - Cannot find Service User");
 	    }
-	}	
-	
-	XBR();	
+	}
+
+	XBR();
 
 	XFORMUPLOAD("dmwssuupdatein.php","dmwssuupdateform");
 	XINSTDHID();
@@ -311,7 +331,7 @@ function Dmws_DMWSSUUPDATE_Output($thisdmwssu_id, $thisvisittype, $thisvisitid ,
 	BROW();
 	BCOLTXT("<h3>".$headingtext."</h3>","3");
 	BCOL("5");
-	
+
 	$dmwsvisita = Get_Array('dmwsvisit',$thisdmwssu_id);
 	$latestvisittype = "";
 	$latestvisitstatus = "";
@@ -368,19 +388,19 @@ function Dmws_DMWSSUUPDATE_Output($thisdmwssu_id, $thisvisittype, $thisvisitid ,
 	}
 	if ($latestvisitstatus == "Completed" ) {
     	if ($latestvisittype == "First" ) {
-    		$activesuffix = ""; if (( $thisvisittype == "Subsequent" )&&( $thisvisitid == "New" )) {$activesuffix = "Active";}	
+    		$activesuffix = ""; if (( $thisvisittype == "Subsequent" )&&( $thisvisitid == "New" )) {$activesuffix = "Active";}
     		BINBUTTONIDSPECIALTOOLTIP("New","SuOff".$activesuffix.$othervisit,"Su","New Visit");
     		$activesuffix = ""; if (( $thisvisittype == "Discharge" )&&( $thisvisitid == "New" )) {$activesuffix = "Active";}
     		BINBUTTONIDSPECIALTOOLTIP("New","DiOff".$activesuffix.$othervisit,"Di","New Visit");
     	}
     	if ($latestvisittype == "Subsequent" ) {
-    	    $activesuffix = ""; if (( $thisvisittype == "Subsequent" )&&( $thisvisitid == "New" )) {$activesuffix = "Active";}	
-    		BINBUTTONIDSPECIALTOOLTIP("New","SuOff".$activesuffix.$othervisit,"Su","New Visit");		
-    		$activesuffix = ""; if (( $thisvisittype == "Discharge" )&&( $thisvisitid == "New" )) {$activesuffix = "Active";}	
+    	    $activesuffix = ""; if (( $thisvisittype == "Subsequent" )&&( $thisvisitid == "New" )) {$activesuffix = "Active";}
+    		BINBUTTONIDSPECIALTOOLTIP("New","SuOff".$activesuffix.$othervisit,"Su","New Visit");
+    		$activesuffix = ""; if (( $thisvisittype == "Discharge" )&&( $thisvisitid == "New" )) {$activesuffix = "Active";}
     		BINBUTTONIDSPECIALTOOLTIP("New","DiOff".$activesuffix.$othervisit,"Di","New Visit");
     	}
     	if ($latestvisittype == "Discharge" ) {
-    		$activesuffix = ""; if (( $thisvisittype == "FollowUp" )&&( $thisvisitid == "New" )) {$activesuffix = "Active";}	
+    		$activesuffix = ""; if (( $thisvisittype == "FollowUp" )&&( $thisvisitid == "New" )) {$activesuffix = "Active";}
     		BINBUTTONIDSPECIALTOOLTIP("New","FoOff".$activesuffix.$othervisit,"Fo","New Visit");
     	}
 	}
@@ -389,31 +409,31 @@ function Dmws_DMWSSUUPDATE_Output($thisdmwssu_id, $thisvisittype, $thisvisitid ,
 	XINHID("dmwsvisit_type",$thisvisittype);
 	XINHID("woname",$GLOBALS{'person_fname'}." ".$GLOBALS{'person_sname'});
 	XINHID("clientservermode",$GLOBALS{'site_clientservermode'});
-	XINHID("SubmitAction","");	
-	
+	XINHID("SubmitAction","");
+
 	if ( $thisvisitid == "New" ) {
 	    Initialise_Data('dmwsvisit');
 	    $GLOBALS{'dmwsvisit_id'} = "New";
-	    $GLOBALS{'dmwsvisit_status'} = "Open";   
+	    $GLOBALS{'dmwsvisit_status'} = "Open";
 	} else {
 	    Get_Data('dmwsvisit',$thisdmwssu_id,$thisvisitid);
 	}
-	
+
 	$updateallowed = "0";
 	if (( $GLOBALS{'person_userlevel'}  == "1" )||( $GLOBALS{'person_userlevel'}  == "2" )) {
 	    if (strlen(strstr($GLOBALS{'dmwssu_dmwscontractlocationid'},"Example"))>0) {} else { $updateallowed = "1"; }
 	}
 	if ( $GLOBALS{'person_userlevel'}  == "4" ) { $updateallowed = "1"; }
-	
+
 	B_COL();
 	BCOL("4");
-	if ( $updateallowed == "1" ) {  
+	if ( $updateallowed == "1" ) {
 	    BINBUTTONIDSPECIALTOOLTIP ("UpdatesMade1","info",'<span><i class="fa fa-crosshairs"></i></span>',"Updates Made");
 	    BINBUTTONIDSPECIAL("Save1","primary","Save");
 	    BINBUTTONIDSPECIAL("SaveClose1","primary","Save and Close");
 	}
 	BINBUTTONIDSPECIAL("Close1","warning","Close");
-	
+
 	$deleteallowed = "0";
 	if ($GLOBALS{'dmwsvisit_status'} != "Completed" ) {
 	    if (( $GLOBALS{'person_userlevel'}  == "1" )||( $GLOBALS{'person_userlevel'}  == "2" )) {
@@ -422,19 +442,19 @@ function Dmws_DMWSSUUPDATE_Output($thisdmwssu_id, $thisvisittype, $thisvisitid ,
 	    if ( $GLOBALS{'person_userlevel'}  == "4" ) { $deleteallowed = "1"; }
 	}
 	if ( $thisvisitid == "New" ) { $deleteallowed = "0"; }
-	if ( $deleteallowed == "1" ) { 
+	if ( $deleteallowed == "1" ) {
 	    if ($GLOBALS{'dmwsvisit_status'} != "Completed" ) {
-	       BINBUTTONIDSPECIAL("DeleteVisit1","danger","Delete Visit"); 
-	    }	
+	       BINBUTTONIDSPECIAL("DeleteVisit1","danger","Delete Visit");
+	    }
 	}
 	B_COL();
-	B_ROW();	
+	B_ROW();
 	XBR();
-	
+
 	$wellbeingrecord = "0";
 	Check_Data('dmwsvisit',$thisdmwssu_id,$thisvisitid);
-	if ($GLOBALS{'IOWARNING'} == "0") { $wellbeingrecord = "1"; }	
-	
+	if ($GLOBALS{'IOWARNING'} == "0") { $wellbeingrecord = "1"; }
+
 	BTABHEADERCONTAINER();
 	if ($currenttab == "SUIN") { BTABHEADERITEMACTIVE("SUIN","SU Info"); } else { BTABHEADERITEM("SUIN","SU Info"); }
 	if ($GLOBALS{'dmwssu_dmwscontractid'} == "MOD") {	// ought to be done in javascript
@@ -450,12 +470,12 @@ function Dmws_DMWSSUUPDATE_Output($thisdmwssu_id, $thisvisittype, $thisvisitid ,
 	if ($currenttab == "REFSIN") { BTABHEADERITEMACTIVE("REFSIN","Referrer Updates"); } else { BTABHEADERITEM("REFSIN","Referrer Updates"); }
 	if (($thisvisittype == "First" )||($thisvisittype == "Discharge" )||($thisvisittype == "FollowUp" )) {
 	   if ($currenttab == "WELL") { BTABHEADERITEMACTIVE("WELL","Wellbeing"); } else { BTABHEADERITEM("WELL","Wellbeing"); }
-	} 
+	}
 	else {
 	   if ($wellbeingrecord == "1") {
 	       if ($currenttab == "WELL") { BTABHEADERITEMACTIVE("WELL","Wellbeing*"); } else { BTABHEADERITEM("WELL","Wellbeing*"); }
 	   }
-    }   
+    }
 	if ($currenttab == "PROG") { BTABHEADERITEMACTIVE("PROG","Progress"); } else { BTABHEADERITEM("PROG","Progress"); }
 	if (($thisvisittype == "First" )||($thisvisittype == "Subsequent" )) {
 	   if ($currenttab == "COMPLEX") { BTABHEADERITEMACTIVE("COMPLEX","Complexity"); } else { BTABHEADERITEM("COMPLEX","Complexity"); }
@@ -465,79 +485,79 @@ function Dmws_DMWSSUUPDATE_Output($thisdmwssu_id, $thisvisittype, $thisvisitid ,
 	if ($currenttab == "OUTCOMES") { BTABHEADERITEMACTIVE("OUTCOMES","Outcomes & Impacts"); } else { BTABHEADERITEM("OUTCOMES","Outcomes & Impacts"); }
 	if ($currenttab == "NOTE") { BTABHEADERITEMACTIVE("NOTE","Notes"); } else { BTABHEADERITEM("NOTE","Notes"); }
 	B_TABHEADERCONTAINER();
-	
+
 	BTABCONTENTCONTAINER();
-	
+
 	if ($currenttab == "SUIN") {BTABCONTENTITEMACTIVE("SUIN");} else {BTABCONTENTITEM("SUIN");}
 	SUINContentOutput($thisdmwssu_id);
-	B_TABCONTENTITEM();	
-	
+	B_TABCONTENTITEM();
+
 	if ($GLOBALS{'dmwssu_dmwscontractid'} == "MOD"){	// ought to be done in javascript
 	   if ($currenttab == "MODSPECIFIC") {BTABCONTENTITEMACTIVE("MODSPECIFIC");} else {BTABCONTENTITEM("MODSPECIFIC");}
 	   MODSPECIFICContentOutput($thisdmwssu_id);
 	   B_TABCONTENTITEM();
 	}
-	
+
 	if ($thisvisittype == "First" ) {
     	if ($currenttab == "CONSENT") {BTABCONTENTITEMACTIVE("CONSENT");} else {BTABCONTENTITEM("CONSENT");}
     	CONSENTContentOutput($thisdmwssu_id);
     	B_TABCONTENTITEM();
 	}
-	
+
 	if ($GLOBALS{'dmwssu_equalityforminterest'} == "Yes"){	// ought to be done in javascript
 	   if ($currenttab == "EQUALITY") {BTABCONTENTITEMACTIVE("EQUALITY");} else {BTABCONTENTITEM("EQUALITY");}
 	   EQUALITYContentOutput($thisdmwssu_id);
-	   B_TABCONTENTITEM();	
+	   B_TABCONTENTITEM();
 	}
-	
+
 	if ($currenttab == "VISITS") {BTABCONTENTITEMACTIVE("VISITS");} else {BTABCONTENTITEM("VISITS");}
 	VISITContentOutput($thisdmwssu_id,$thisvisitid);
 	B_TABCONTENTITEM();
-	
+
 	if ($currenttab == "REFSIN") {BTABCONTENTITEMACTIVE("REFSIN");} else {BTABCONTENTITEM("REFSIN");}
 	REFSINContentOutput($thisdmwssu_id);
 	B_TABCONTENTITEM();
-	
+
 	if (($thisvisittype == "First" )||($thisvisittype == "Discharge" )||($thisvisittype == "FollowUp" )) {
     	if ($currenttab == "WELL") {BTABCONTENTITEMACTIVE("WELL");} else {BTABCONTENTITEM("WELL");}
     	WELLContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid);
-    	B_TABCONTENTITEM();	
+    	B_TABCONTENTITEM();
 	} else {
 	    if ($wellbeingrecord == "1") {
 	        if ($currenttab == "WELL") {BTABCONTENTITEMACTIVE("WELL");} else {BTABCONTENTITEM("WELL");}
 	        WELLContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid);
-	        B_TABCONTENTITEM();	
+	        B_TABCONTENTITEM();
 	    }
-	} 
-	
+	}
+
 	if ($currenttab == "PROG") {BTABCONTENTITEMACTIVE("PROG");} else {BTABCONTENTITEM("PROG");}
 	PROGRESSContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid);
 	B_TABCONTENTITEM();
-	
+
 	if (($thisvisittype == "First" )||($thisvisittype == "Subsequent" )) {
     	if ($currenttab == "COMPLEX") {BTABCONTENTITEMACTIVE("COMPLEX");} else {BTABCONTENTITEM("COMPLEX");}
     	COMPLEXContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid);
     	B_TABCONTENTITEM();
 	}
-	
+
 	if ($currenttab == "REFSOUT") {BTABCONTENTITEMACTIVE("REFSOUT");} else {BTABCONTENTITEM("REFSOUT");}
 	REFSOUTContentOutput($thisdmwssu_id);
-	B_TABCONTENTITEM();	
-	
+	B_TABCONTENTITEM();
+
 	if ($currenttab == "ACTS") {BTABCONTENTITEMACTIVE("ACTS");} else {BTABCONTENTITEM("ACTS");}
 	ACTSContentOutput($thisdmwssu_id);
-	B_TABCONTENTITEM();	
-	
+	B_TABCONTENTITEM();
+
 	if ($currenttab == "OUTCOMES") {BTABCONTENTITEMACTIVE("OUTCOMES");} else {BTABCONTENTITEM("OUTCOMES");}
 	OUTCOMESContentOutput($thisdmwssu_id);
-	B_TABCONTENTITEM();	
-	
+	B_TABCONTENTITEM();
+
 	if ($currenttab == "NOTE") {BTABCONTENTITEMACTIVE("NOTE");} else {BTABCONTENTITEM("NOTE");}
 	NOTEContentOutput($thisdmwssu_id);
 	B_TABCONTENTITEM();
-	
+
 	B_TABCONTENTCONTAINER();
-	
+
 	XHR();
 	BROW();
 	BCOLTXT("","8");
@@ -548,7 +568,7 @@ function Dmws_DMWSSUUPDATE_Output($thisdmwssu_id, $thisvisittype, $thisvisitid ,
 	    BINBUTTONIDSPECIAL("SaveClose2","primary","Save and Close");
 	}
 	BINBUTTONIDSPECIAL("Close2","warning","Close");
-	
+
 	$deleteallowed = "0";
 	if ($GLOBALS{'dmwsvisit_status'} != "Completed" ) {
 	    if (( $GLOBALS{'person_userlevel'}  == "1" )||( $GLOBALS{'person_userlevel'}  == "2" )) {
@@ -563,29 +583,36 @@ function Dmws_DMWSSUUPDATE_Output($thisdmwssu_id, $thisvisittype, $thisvisitid ,
 	    }
 	}
 	B_COL();
-	B_ROW();	
-	
+	B_ROW();
+
 	X_FORM();
 	XTXTID("TRACETEXT","");
-	
+
 	SignaturePopup();
 	AttachmentUploadPopup($thisdmwssu_id);
 }
 
 function SUINContentOutput() {
-	XBR();
-	XH3("Service User Information");
-	XHRCLASS('underline');
-	XPTXT("Please enter any changes to the Service User's information.");
-	XHR();
-	XH4("Contract & Location Details");
-	BROW();
-	
-	// --- set permitted locations ------------
-	$permitteddmwscontractlocationida = Array();
-	$permitteddmwscontractlocationnamea = Array();
-    $dmwscontractlocationa = Get_Array('dmwscontractlocation');
-    foreach ($dmwscontractlocationa as $dmwscontractlocation_id) {
+    XBR();
+    XH3("Service User Information");
+    XHRCLASS('underline');
+    XPTXT("Please enter any changes to the Service User's information.");
+    XHR();
+    XH4("Contract & Location Details");
+    BROW();
+
+    // --- set permitted locations ------------
+    $permitteddmwscontractlocationida = Array();
+    $permitteddmwscontractlocationnamea = Array();
+    $disabledLocations = Array();
+    // $dmwscontractlocationa = Get_Array('dmwscontractlocation');
+    $dmwscontractlocationa = Get_Array_Select('dmwscontractlocation','','dmwscontractlocation_id');
+    // print_r($dmwscontractlocationa);
+    // foreach ($dmwscontractlocationa as $dmwscontractlocation_id) {
+    for ($i=0; $i < sizeof($dmwscontractlocationa); $i++) {
+        $dmwscontractlocation_id = $dmwscontractlocationa[$i][0];
+        $disabledLocations[$dmwscontractlocationa[$i][0]] = $dmwscontractlocationa[$i][1];
+        // $disabledLocations .= $dmwscontractlocationa[$i][1];
         Get_Data('dmwscontractlocation',$dmwscontractlocation_id);
         if ( ($GLOBALS{'person_userlevel'}  == "1" )||( $GLOBALS{'person_userlevel'}  == "2" )) {
             if (( FoundInCommaList( $GLOBALS{'LOGIN_person_id'}, $GLOBALS{'dmwscontractlocation_officerlist'}) )||
@@ -605,12 +632,12 @@ function SUINContentOutput() {
                 array_push($permitteddmwscontractlocationida,$dmwscontractlocation_id);
                 array_push($permitteddmwscontractlocationnamea,$GLOBALS{'dmwscontractlocation_name'});
             }
-        }  
+        }
     }
 
     // --- set permitted contracts ------------
-    $permitteddmwscontractida = Array(); 
-    $permitteddmwscontractnamea = Array(); 
+    $permitteddmwscontractida = Array();
+    $permitteddmwscontractnamea = Array();
     $dmwscontracta = Get_Array('dmwscontract');
     foreach ($dmwscontracta as $dmwscontract_id) {
         Get_Data('dmwscontract',$dmwscontract_id);
@@ -622,7 +649,7 @@ function SUINContentOutput() {
         }
         if ( $permittedcontract == "1" ) {
             array_push($permitteddmwscontractida,$dmwscontract_id);
-            array_push($permitteddmwscontractnamea,$GLOBALS{'dmwscontract_name'});                 
+            array_push($permitteddmwscontractnamea,$GLOBALS{'dmwscontract_name'});
         }
     }
     /*if ($GLOBALS{'LOGIN_person_id'} == "mche"){
@@ -636,7 +663,10 @@ function SUINContentOutput() {
     BCOLINSELECTHASHIDCLASS ($xhash,'dmwssu_dmwscontractid','mand mandcheck','dmwssu_dmwscontractid',$GLOBALS{'dmwssu_dmwscontractid'},"3");
     BCOLTXT("Contract Location","1");
     $xhash = Arrays2Hash ($permitteddmwscontractlocationida, $permitteddmwscontractlocationnamea);
-    BCOLINSELECTHASHIDCLASS ($xhash,'dmwssu_dmwscontractlocationid','mand mandcheck','dmwssu_dmwscontractlocationid',$GLOBALS{'dmwssu_dmwscontractlocationid'},"3");
+    // function BCOLINSELECTHASHIDCLASS ($hash,$id,$class,$name,$value,$cols) {
+    BCOLINSELECTHASHIDCLASSDISABLED($xhash,'dmwssu_dmwscontractlocationid','mand mandcheck','dmwssu_dmwscontractlocationid',$GLOBALS{'dmwssu_dmwscontractlocationid'},"3",$disabledLocations);
+    // BCOLINSELECTHASHIDCLASS ($xhash,'dmwssu_dmwscontractlocationid','mand mandcheck','dmwssu_dmwscontractlocationid',$GLOBALS{'dmwssu_dmwscontractlocationid'},"3");
+
     B_ROW();
     XHR();
     XH4("Contact Details");
@@ -659,7 +689,7 @@ function SUINContentOutput() {
 	BCOLINSELECTHASHID ($xhash,'dmwssu_gender','dmwssu_gender',$GLOBALS{'dmwssu_gender'},"1");
 	BCOLTXT("Preferred Name","1");
 	BCOLINTXTID('dmwssux_likedname','dmwssux_likedname',$GLOBALS{'dmwssux_likedname'},"3");
-	B_ROW();	
+	B_ROW();
 	BROW();
 	BCOLTXT("Address","1");
 	BCOLINTXTID('dmwssux_address','dmwssux_address',$GLOBALS{'dmwssux_address'},"7");
@@ -759,6 +789,8 @@ function SUINContentOutput() {
 	BCOLINTXTID('dmwssu_dmwspreviousoccupationtypeother','dmwssu_dmwspreviousoccupationtypeother',$GLOBALS{'dmwssu_dmwspreviousoccupationtypeother'},"2");
 	B_ROW();
 	BROW();
+	BCOLTXT("Current Occupation","1");
+	BCOLINTXTID('dmwssu_dmwsoccupation','dmwssu_dmwsoccupation',$GLOBALS{'dmwssu_dmwsoccupation'},"1");
 	BCOLTXT("Is The SU A War Pensioner in receipt of:","2");
 	BCOL("2");BINRADIOID("dmwssu_warpension","dmwssu_warpension","A war disablement pension/gratuity under the War Pensions Scheme",CheckedIf($GLOBALS{'dmwssu_warpension'},"A war disablement pension/gratuity under the War Pensions Scheme"),"A war disablement pension/gratuity under the War Pensions Scheme");B_COL();
 	BCOL("2");BINRADIOID("dmwssu_warpensionlumpsum","dmwssu_warpension","A lump sum/guaranteed income payment under the Armed Forces Compensation Scheme",CheckedIf($GLOBALS{'dmwssu_warpension'},"A lump sum/guaranteed income payment under the Armed Forces Compensation Scheme"), "A lump sum/guaranteed income payment under the Armed Forces Compensation Scheme");B_COL();
@@ -837,24 +869,29 @@ function SUINContentOutput() {
 	BCOLINSELECTHASHIDCLASS ($xhash,'dmwssu_dmwsadmissiontypeid','mand mandcheck','dmwssu_dmwsadmissiontypeid',$GLOBALS{'dmwssu_dmwsadmissiontypeid'},"3");
 	BCOLTXT("Admission Date","1");
 	BCOLINDATEIDCLASS('dmwssu_dmwsadmissiondate','dmwssu_dmwsadmissiondate_dd/mm/yyyy','mand',YYYY_MM_DDtoDDsMMsYYYY($GLOBALS{'dmwssu_dmwsadmissiondate'}),'dd/mm/yyyy',"3");
-	BCOLTXT("WO Name","1");
-	if ($GLOBALS{'dmwssu_woname'} != "") {
-	    BCOLINTXTIDCLASS('dmwssu_woname','mand', 'dmwssu_woname', $GLOBALS{'dmwssu_woname'}, "3");
-	} else {
-	    BCOLINTXTIDCLASS('dmwssu_woname','mand', 'dmwssu_woname', $GLOBALS{'dmwsvisit_personid'}, "3");
-	}
+	BCOLTXT("Additional Diagnosis","1");
+	BCOLINTXTID('dmwssu_dmwsadditionaldiagnosis', 'dmwssu_dmwsadditionaldiagnosis',$GLOBALS{'dmwssu_dmwsadditionaldiagnosis'}, "3");
 	B_ROW();
 	BROW();
 	BCOLTXT("NHS Number","1");
 	BCOLINTXTID('dmwssux_nhsnumber', 'dmwssux_nhsnumber',$GLOBALS{'dmwssux_nhsnumber'}, "3");
 	BCOLTXT("First Clinic Appointment Date","1");
 	BCOLINDATEID('dmwssu_firstclinicapptdate','dmwssu_firstclinicapptdate_dd/mm/yyyy',YYYY_MM_DDtoDDsMMsYYYY($GLOBALS{'dmwssu_firstclinicapptdate'}),'dd/mm/yyyy',"3");
-	BCOLTXT("WO Personal Id","1");
-	BCOLINTXTID('dmwssu_wopersonid', 'dmwssu_wopersonid',$GLOBALS{'dmwssu_wopersonid'}, "3");
+
 	B_ROW();
 	BROW();
-	BCOLTXT("","8");
+	BCOLTXT("WO Name","1");
+	if ($GLOBALS{'dmwssu_woname'} != "") {
+	    BCOLINTXTIDCLASS('dmwssu_woname','mand', 'dmwssu_woname', $GLOBALS{'dmwssu_woname'}, "3");
+	} else {
+	    BCOLINTXTIDCLASS('dmwssu_woname','mand', 'dmwssu_woname', $GLOBALS{'dmwsvisit_personid'}, "3");
+	}
+	BCOLTXT("WO Personal Id","1");
+	BCOLINTXTID('dmwssu_wopersonid', 'dmwssu_wopersonid',$GLOBALS{'dmwssu_wopersonid'}, "3");
 	BCOLTXT("Other WO Ids","1");
+        $GLOBALS{'dmwssu_otherwopersonidlist'} = str_replace(" ", "", $GLOBALS{'dmwssu_otherwopersonidlist'});
+        $GLOBALS{'dmwssu_otherwopersonidlist'} = str_replace(";", ",", $GLOBALS{'dmwssu_otherwopersonidlist'});
+        $GLOBALS{'dmwssu_otherwopersonidlist'} = strtolower($GLOBALS{'dmwssu_otherwopersonidlist'});
 	BCOLINTXTID('dmwssu_otherwopersonidlist', 'dmwssu_otherwopersonidlist',$GLOBALS{'dmwssu_otherwopersonidlist'}, "3");
 	B_ROW();
 	XHR();
@@ -874,7 +911,37 @@ function SUINContentOutput() {
 	BCOLINDATEID('dmwssu_casecloseddate','dmwssu_casecloseddate_dd/mm/yyyy',YYYY_MM_DDtoDDsMMsYYYY($GLOBALS{'dmwssu_casecloseddate'}),'dd/mm/yy',"3");
 	BCOLTXT("Actual Discharge Date","1");
 	BCOLINDATEID('dmwssu_dischargedate','dmwssu_dischargedate_dd/mm/yyyy',YYYY_MM_DDtoDDsMMsYYYY($GLOBALS{'dmwssu_dischargedate'}),'dd/mm/yyyy',"3");
-	
+	B_ROW();
+        /*
+	BROW();
+	BCOLTXT("Case Status","1");
+	BCOL("2");BINRADIOID("dmwssu_caseopen","dmwssu_casestatus","Open",CheckedIf($GLOBALS{'dmwssu_casestatus'},"open"), "Open");B_COL();
+	BCOL("2");BINRADIOID("dmwssu_caseclosed","dmwssu_casestatus","Closed",CheckedIf($GLOBALS{'dmwssu_casestatus'},"closed"), "Closed");B_COL();
+	BCOL("2");BINRADIOID("dmwssu_casearchived","dmwssu_casestatus","Archived",CheckedIf($GLOBALS{'dmwssu_casestatus'},"archived"), "Archived");B_COL();
+	B_ROW();
+        */
+	BROW();
+	BCOLTXT("Pre Referral A&E Attendance Occasions","1");
+	BCOLINNUMID('dmwssu_prereferralaeattendancecount', 'dmwssu_prereferralaeattendancecount',$GLOBALS{'dmwssu_prereferralaeattendancecount'}, "2");
+	BCOLTXT("Pre Referral A&E Period Weeks","1");
+	BCOLINNUMID('dmwssu_prereferralaeperiodweek', 'dmwssu_prereferralaeperiodweek',$GLOBALS{'dmwssu_prereferralaeperiodweek'}, "2");
+	BCOLTXT("Post Referral A&E Attendance Occasions","1");
+	BCOLINNUMID('dmwssu_postreferralaeattendancecount', 'dmwssu_postreferralaeattendancecount',$GLOBALS{'dmwssu_postreferralaeattendancecount'}, "2");
+	BCOLTXT("Pre Referral A&E Period Weeks","1");
+	BCOLINNUMID('dmwssu_postreferralaeperiodweek', 'dmwssu_postreferralaeperiodweek',$GLOBALS{'dmwssu_postreferralaeperiodweek'}, "2");
+	B_ROW();
+	BROW();
+	BCOLTXT("Pre Referral Admission Occasions","1");
+	BCOLINNUMID('dmwssu_prereferraladmissioncount', 'dmwssu_prereferraladmissioncount',$GLOBALS{'dmwssu_prereferraladmissioncount'}, "2");
+
+	BCOLTXT("Pre Referral Admission Period Weeks","1");
+	BCOLINNUMID('dmwssu_prereferralperiodweek', 'dmwssu_prereferralperiodweek',$GLOBALS{'dmwssu_prereferralperiodweek'}, "2");
+
+	BCOLTXT("Post Referral Admission Occasions","1");
+	BCOLINNUMID('dmwssu_postreferraladmissioncount', 'dmwssu_postreferraladmissioncount',$GLOBALS{'dmwssu_postreferraladmissioncount'}, "2");
+
+	BCOLTXT("Post Referral Admission Period Weeks","1");
+	BCOLINNUMID('dmwssu_postreferralperiodweek', 'dmwssu_postreferralperiodweek',$GLOBALS{'dmwssu_postreferralperiodweek'}, "2");
 	B_ROW();
 	BROW();
 	BCOLTXT("Follow Up Agreed","1");
@@ -930,9 +997,9 @@ function SUINContentOutput() {
 }
 
 function VISITContentOutput($thisdmwssu_id, $dmwsvisit_id) {
-    
+
     Check_Data('dmwsvisit',$thisdmwssu_id,$dmwsvisit_id);
-    
+
     XINHID('dmwsvisit_startfield',"");
     XBR();
     BROW();
@@ -968,15 +1035,15 @@ function VISITContentOutput($thisdmwssu_id, $dmwsvisit_id) {
     BCOLINTXTID('dmwsvisit_location','dmwsvisit_location',$GLOBALS{'dmwsvisit_location'},"2");
     BCOLTXT("","6");
     B_ROW();
-    
+
     XH3("Notes");
     BROW();
     BCOLTXT("Contact Notes","1");
     BCOLINTEXTAREAID('dmwsvisit_notes','dmwsvisit_notes',$GLOBALS{'dmwsvisit_notes'},"5","10");
     BCOLTXT("","1");
     B_ROW();
-    
-    
+
+
     XH3("Timesheet");
     BROW();
     BCOLTXT("Activity Within TimeBand<br>Minutes","2");
@@ -991,12 +1058,12 @@ function VISITContentOutput($thisdmwssu_id, $dmwsvisit_id) {
     BCOLTXT("Other Admin<br>etc","1");
     BCOLTXT("","1");
     B_ROW();
-    
+
     $timebandsa = Array();
     $dmwstimebanda = Get_Array('dmwstimeband');
     foreach ($dmwstimebanda as $dmwstimeband_id) {
         Get_Data('dmwstimeband',$dmwstimeband_id);
-        
+
         if ($GLOBALS{'dmwstimeband_dmwscontractid'} == $GLOBALS{'dmwssu_dmwscontractid'} && $GLOBALS{'dmwstimeband_dmwscontractlocationid'} == $GLOBALS{'dmwssu_dmwscontractlocationid'}) {
             array_push($timebandsa,$dmwstimeband_id);
             BROW();
@@ -1015,7 +1082,7 @@ function VISITContentOutput($thisdmwssu_id, $dmwsvisit_id) {
         }
     }
     if (sizeof($timebandsa) == "0"){
-        
+
         foreach ($dmwstimebanda as $dmwstimeband_id) {
             Get_Data('dmwstimeband',$dmwstimeband_id);
             if ($GLOBALS{'dmwstimeband_dmwscontractid'} == "Default"){
@@ -1048,7 +1115,7 @@ function VISITContentOutput($thisdmwssu_id, $dmwsvisit_id) {
         B_COL();
         B_ROW();
         XINHID('dmwsvisit_newvisittype','');
-        
+
     }
     XINHID('dmwsvisit_mandfieldsremaininglist','');
     XINHID('dmwsvisit_endfield',"");
@@ -1064,16 +1131,16 @@ function CONSENTContentOutput($thisdmwssu_id) {
 	XBR();
 	XPTXT("DMWS collect and store your personal information in line with the <b>Data Protection Act  1998</b> (DPA) and the <b>General Data Protection Regulation (GDPR)</b> (Regulation (EU) 2016/679).
 			DMWS follow the 8 principles of the DPA ");
-	XPTXT("<ol><li>Personal data shall be processed fairly and lawfully.</li> 
-            <li>Personal data shall be obtained only for one or more specified and lawful purposes, and shall not be further processed in any manner incompatible with that purpose or those purposes.</li> 
-			<li>Personal data shall be adequate, relevant and not excessive.</li> 
-			<li>Personal data shall be accurate and, where necessary, kept up to date.</li> 
-			<li>Personal data shall not be kept for longer than is necessary.</li> 
-			<li>Personal data shall be processed in accordance with the rights of data subjects under this Act.</li> 
-			<li>Appropriate technical and organisational measures shall be taken against unauthorised or unlawful processing of personal data and against accidental loss or destruction of, or damage to, personal data.</li> 
+	XPTXT("<ol><li>Personal data shall be processed fairly and lawfully.</li>
+            <li>Personal data shall be obtained only for one or more specified and lawful purposes, and shall not be further processed in any manner incompatible with that purpose or those purposes.</li>
+			<li>Personal data shall be adequate, relevant and not excessive.</li>
+			<li>Personal data shall be accurate and, where necessary, kept up to date.</li>
+			<li>Personal data shall not be kept for longer than is necessary.</li>
+			<li>Personal data shall be processed in accordance with the rights of data subjects under this Act.</li>
+			<li>Appropriate technical and organisational measures shall be taken against unauthorised or unlawful processing of personal data and against accidental loss or destruction of, or damage to, personal data.</li>
 			<li>Personal data shall not be transferred to a country or territory outside the European Economic Area unless that country or territory ensures an adequate level of protection for the rights and freedoms of data subjects in relation to the processing of personal data.</li></ol>");
-	XHR(); 
-			
+	XHR();
+
 	XPTXT("<b>How we use your personal data</b>");
 	XPTXT("<i>(for you and any members of your family that we may provide our services to)</i>");
 	XPTXT("<ul>
@@ -1143,37 +1210,37 @@ function CONSENTContentOutput($thisdmwssu_id) {
 	// XINHIDID("dmwssux_signature","dmwssux_signature","");
 	XBR();XBR();
 	*/
-	
-	XH3("Signature");	
+
+	XH3("Signature");
 	// XPTXT($GLOBALS{'dmwssux_signature'});
 	XINHIDIDDQ("dmwssux_signature","dmwssux_signature",$GLOBALS{'dmwssux_signature'});
 	XINHIDIDDQ("mirrorsignature","mirrorsignature","");
-	
+
 	XDIV("noSignature","");
 	XBR();
 	XTXT("No signature recorded");
 	XBR();
 	X_DIV("noSignature");
-	
+
 	XDIV("drawSignature","kbw-signaturedraw");
 	X_DIV("drawSignature");
 	XBR();
 	BINBUTTONIDSPECIAL("drawSignatureClear","warning","Remove Signature");
 	BINBUTTONIDSPECIAL("drawSignatureUpdate","primary","Enter Signature");
 	XBR();XBR();
-	
+
 	BROW();
 	BCOLINCHECKBOXYN ("dmwssu_signatureproxy",$GLOBALS{'dmwssu_signatureproxy'},"Consent provided by proxy.","2");
 	BCOLTXT("Name","1");
 	BCOLINTXTID('dmwssu_signatureproxyname','dmwssu_signatureproxyname',$GLOBALS{'dmwssu_signatureproxyname'},"6");
-	B_ROW();	
+	B_ROW();
 
 	BROW();
 	BCOLTXT("Date","1");
 	BCOLINDATEID('dmwssu_consentdate','dmwssu_consentdate_dd/mm/yyyy',YYYY_MM_DDtoDDsMMsYYYY($GLOBALS{'dmwssu_consentdate'}), "dd/mm/yyyy","3");
 	BCOLTXT("","9");
 	B_ROW();
-	XHR();	
+	XHR();
 	XBR();
 	BROWEQH();
 	BCOLTXTCOLOR("<b>Withdrawal Reason</b>","2","gray","white");
@@ -1181,7 +1248,7 @@ function CONSENTContentOutput($thisdmwssu_id) {
 	BCOLTXTCOLOR("<b>Date</b>","1","gray","white");
 	BCOL("1"); BINBUTTONIDSPECIAL('dmwsconsentwithdrawal_add_new',"success","+"); B_COL();
 	B_ROW();
-	
+
 	$dmwsconsentwithdrawala = Get_Array('dmwsconsentwithdrawal',$thisdmwssu_id);
 	foreach ($dmwsconsentwithdrawala as $dmwsconsentwithdrawal_dmwsconsentwithdrawaltypeid) {
 	    Check_Data('dmwsconsentwithdrawal',$thisdmwssu_id,$dmwsconsentwithdrawal_dmwsconsentwithdrawaltypeid);
@@ -1200,8 +1267,8 @@ function CONSENTContentOutput($thisdmwssu_id) {
 	}
 	XDIV("dmwsconsentwithdrawallistend","");
 	X_DIV("dmwsconsentwithdrawallistend");
-	
-	
+
+
 	/*XBR();
 	BROW();
 	BCOLTXT("", "2");
@@ -1241,15 +1308,15 @@ echo <<< EOT
 	<p style="clear: both;"><span class="demoLabel">&nbsp;</span>
 	<button type="button" id="removeSignature">Clear</button>
 	<button type="button" id="saveSignature">Save</button>
-   
+
 EOT;
     XBR();XBR();
 	BROW();
-	BCOLTXT("Date","1");	
+	BCOLTXT("Date","1");
 	BCOLINDATEID('dmwssu_consentdate'.$dmwsreferral_id, 'dmwsreferral_consentdate'.$dmwsreferral_id.'_dd/mm/yyyy',YYYY_MM_DDtoDDsMMsYYYY($GLOBALS{'dmwssu_consentdate'}), "dd/mm/yyyy","3");
 	BCOLTXT("","9");
 	B_ROW();
-	
+
 	X_TD();
 	X_TR();
 	X_TABLE();
@@ -1275,7 +1342,7 @@ function MODSPECIFICContentOutput($thisdmwssu_id) {
 	B_ROW();
 	XINHID('dmwsmodspecific_endfield',"");
 }
-	
+
 
 function EQUALITYContentOutput($thisdmwssu_id) {
 	XINHID('dmwsequality_startfield',"");
@@ -1286,13 +1353,13 @@ function EQUALITYContentOutput($thisdmwssu_id) {
 	XHR();
 	XH4("Marriage Status");
 	BROW();
-	
+
 	/*
 	function BINRADIOID ($idname, $name, $value, $selected, $text) {
 	    echo '<div class="radio"><label><input id="'.$idname.'" type="radio" name="'.$name.'" value="'.$value.'" '.$selected.'>'.$text.'</label></div>'."\n";
 	}
 	*/
-	
+
 	BCOL("2");BINRADIOID("dmwssu_marriagestatusyes","dmwssu_marriagestatus","Married",CheckedIf($GLOBALS{'dmwssu_marriagestatus'},"Married"), "Married / In a Civil Partnership");B_COL();
 	BCOL("3");BINRADIOID("dmwssu_marriagestatusno","dmwssu_marriagestatus","NotMarried",CheckedIf($GLOBALS{'dmwssu_marriagestatus'},"NotMarried"),  "Not Married / Not In a Civil Partnership");B_COL();
 	BCOL("2");BINRADIOID("dmwssu_marriagewidow","dmwssu_marriagestatus","Widow", CheckedIf($GLOBALS{'dmwssu_marriagestatus'},"Widow"), "Widow / Widower/ Partner Deceased");B_COL();
@@ -1449,14 +1516,14 @@ function REFSINContentOutput($thisdmwssu_id) {
 	BROWEQH();
 	BCOLTXTCOLOR("<b>Date</b>","1","gray","white");
 	BCOLTXTCOLOR("<b>Welfare Officer</b>","2","gray","white");
-	BCOLTXTCOLOR("<b>Referrer Org / Referrer Contact Details </b>","2","gray","white");	
+	BCOLTXTCOLOR("<b>Referrer Org / Referrer Contact Details </b>","2","gray","white");
 	BCOLTXTCOLOR("<b>Update</b>","3","gray","white");
 	BCOLTXTCOLOR("<b>Response From Referrer</b>","3","gray","white");
 	BCOL("1");	BINBUTTONIDSPECIAL('dmwsreferrerupdate_add_new',"success","+"); B_COL();
 	B_ROW();
 	$dmwsreferrerupdatea = Get_Array('dmwsreferrerupdate',$thisdmwssu_id);
 	foreach ($dmwsreferrerupdatea as $dmwsreferrerupdate_id) {
-		Check_Data('dmwsreferrerupdate',$thisdmwssu_id,$dmwsreferrerupdate_id);			
+		Check_Data('dmwsreferrerupdate',$thisdmwssu_id,$dmwsreferrerupdate_id);
 		if ($GLOBALS{'IOWARNING'} == "0") {
 		    BROW();
 		    XINHID('dmwsreferrerupdate_startfield_'.$dmwsreferrerupdate_id,"");
@@ -1468,7 +1535,7 @@ function REFSINContentOutput($thisdmwssu_id) {
 			BINTXTIDCLASS('dmwsreferrerupdate_contactref_'.$dmwsreferrerupdate_id,'mand','dmwsreferrerupdate_contactref_'.$dmwsreferrerupdate_id,$GLOBALS{'dmwsreferrerupdate_contactref'});
 			B_COL();
 			BCOLINTEXTAREAIDCLASS('dmwsreferrerupdate_statusupdate_'.$dmwsreferrerupdate_id,'mand','dmwsreferrerupdate_statusupdate_'.$dmwsreferrerupdate_id,$GLOBALS{'dmwsreferrerupdate_statusupdate'},"3","3");
-			BCOLINTEXTAREAIDCLASS('dmwsreferrerupdate_response_'.$dmwsreferrerupdate_id,'mand','dmwsreferrerupdate_response_'.$dmwsreferrerupdate_id,$GLOBALS{'dmwsreferrerupdate_response'},"3","3");					
+			BCOLINTEXTAREAIDCLASS('dmwsreferrerupdate_response_'.$dmwsreferrerupdate_id,'mand','dmwsreferrerupdate_response_'.$dmwsreferrerupdate_id,$GLOBALS{'dmwsreferrerupdate_response'},"3","3");
 			BCOL("1"); BINBUTTONIDCLASSSPECIAL('dmwsreferrerupdate_delete_'.$dmwsreferrerupdate_id,"dmwsreferrerupdatedelete","danger","x"); B_COL();
 			XINHID('dmwsreferrerupdate_endfield_'.$dmwsreferrerupdate_id,"");
 			B_ROW();
@@ -1480,7 +1547,7 @@ function REFSINContentOutput($thisdmwssu_id) {
 }
 
 function WELLContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
-	
+
     XINHID('dmwswellbeing_startfield',"");
     XBR();
 	XH3("Wellbeing Assessment");
@@ -1534,16 +1601,16 @@ function WELLContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
 	    if ($latestvisittype == "FollowUp" ) {
 	        BINBUTTONIDCLASSSPECIAL("New","wellbeingdatabutton","FoOffActive","Fo");
 	    }
-	}   
+	}
 	X_DIV("wellbeingdatabuttons");
 	BROW();
-	BCOLTXT("","4");	
+	BCOLTXT("","4");
 	BCOLTXT("None of the Time","1");
 	BCOLTXT("Rarely","1");
 	BCOLTXT("Some of the Time","1");
-	BCOLTXT("Often","1");	
-	BCOLTXT("All of the time","1");	
-	BCOLTXT("","3");	
+	BCOLTXT("Often","1");
+	BCOLTXT("All of the time","1");
+	BCOLTXT("","3");
 	B_ROW();
 	XHR();
 	BROW();
@@ -1676,7 +1743,7 @@ function WELLContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
 	BCOLTXT("","3");
 	B_ROW();
 	XBR();
-		
+
 	BROW();
 	BCOLTXT("<b>Total Score</b>", "1");
 	BCOLINTXTID("dmwswellbeing_score", "dmwswellbeing_score", $GLOBALS{'dmwswellebing_score'}, 1);
@@ -1699,7 +1766,7 @@ function WELLContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
 	XINHID('dmwswellbeing_endfield',"");
 }
 
-function PROGRESSContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {    
+function PROGRESSContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
     XINHID('dmwsprogress_startfield',"");
 	XBR();
 	XH3("Progress Assessment");
@@ -1724,7 +1791,7 @@ function PROGRESSContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
 		if ( $thisvisitid == $dmwsvisit_id ) {$activesuffix = "Active";}
 		if ($GLOBALS{'dmwsvisit_type'} == "First" ) {
 			BINBUTTONIDCLASSSPECIAL($dmwsvisit_id,"progdatabutton","FiOn".$activesuffix,"Fi");
-		}		
+		}
 		if ($GLOBALS{'dmwsvisit_type'} == "Subsequent" ) {
 			BINBUTTONIDCLASSSPECIAL($dmwsvisit_id,"progdatabutton","SuOn".$activesuffix,"Su");
 		}
@@ -1732,8 +1799,8 @@ function PROGRESSContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
 			BINBUTTONIDCLASSSPECIAL($dmwsvisit_id,"progdatabutton","DiOn".$activesuffix,"Di");
 		}
 		if ($GLOBALS{'dmwsvisit_type'} == "FollowUp" ) {
-			BINBUTTONIDCLASSSPECIAL($dmwsvisit_id,"progdatabutton","FoOn".$activesuffix,"Fo");	
-		}		
+			BINBUTTONIDCLASSSPECIAL($dmwsvisit_id,"progdatabutton","FoOn".$activesuffix,"Fo");
+		}
     }
     if ($thisvisitid == "New") {
         if ($latestvisittype == "" ) {
@@ -1761,7 +1828,7 @@ function PROGRESSContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
         if ($latestvisittype == "FollowUp" ) {
             BINBUTTONIDCLASSSPECIAL("New","progdatabutton","FoOffActive","Fo");
         }
-    }   	
+    }
     X_DIV("progdatabuttons");
     BROW();
     BCOLTXT("","10");
@@ -1771,9 +1838,9 @@ function PROGRESSContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
     X_DIV("chart");
     XBR();XBR();XBR();XBR();XBR();
     XCLEARFLOAT();
-    
+
     Check_Data('dmwsprogress',$thisdmwssu_id,$thisvisitid);
-	
+
 	// Included to capture the results of the progress chart
 	XINHIDID("dmwsprogress_treatment", "dmwsprogress_treatment", $GLOBALS{'dmwsprogress_treatment'});
 	XINHIDID("dmwsprogress_health", "dmwsprogress_health", $GLOBALS{'dmwsprogress_health'});
@@ -1784,7 +1851,7 @@ function PROGRESSContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
 	XINHIDID("dmwsprogress_finance", "dmwsprogress_finance", $GLOBALS{'dmwsprogress_finance'});
 	XINHIDID("dmwsprogress_work", "dmwsprogress_work", $GLOBALS{'dmwsprogress_work'});
 	XINHIDID("dmwsprogress_social", "dmwsprogress_social", $GLOBALS{'dmwsprogress_social'});
-	XINHIDID("dmwsprogress_activities", "dmwsprogress_activities", $GLOBALS{'dmwsprogress_activities'});	
+	XINHIDID("dmwsprogress_activities", "dmwsprogress_activities", $GLOBALS{'dmwsprogress_activities'});
 
 	BROW();
 	BCOLTXT("<b>Total Score</b>", "1");
@@ -1792,39 +1859,39 @@ function PROGRESSContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
 	BCOLTXTID(dmwsprogressmessage, "Please complete the assessment notes before continuing","4");
 	BCOLTXT("","7");
 	B_ROW();
-	
-	
+
+
 	XH3("Notes");
 	BROW();
 	BCOLTXT("Current Admission or Treatment","2");
 	BCOLINTEXTAREAID('dmwsprogress_treatmentnotes','dmwsprogress_treatmentnotes',$GLOBALS{'dmwsprogress_treatmentnotes'},"3","8");
 	BCOLTXT("","2");
-	B_ROW();	
+	B_ROW();
 	BROW();
 	BCOLTXT("General Health","2");
 	BCOLINTEXTAREAID('dmwsprogress_healthnotes','dmwsprogress_healthnotes',$GLOBALS{'dmwsprogress_healthnotes'},"3","8");
 	BCOLTXT("","2");
-	B_ROW();	
+	B_ROW();
 	BROW();
 	BCOLTXT("General Wellbeing","2");
 	BCOLINTEXTAREAID('dmwsprogress_wellbeingnotes','dmwsprogress_wellbeingnotes',$GLOBALS{'dmwsprogress_wellbeingnotes'},"3","8");
 	BCOLTXT("","2");
-	B_ROW();	
+	B_ROW();
 	BROW();
 	BCOLTXT("Family","2");
 	BCOLINTEXTAREAID('dmwsprogress_familynotes','dmwsprogress_familynotes',$GLOBALS{'dmwsprogress_familynotes'},"3","8");
 	BCOLTXT("","2");
-	B_ROW();	
+	B_ROW();
 	BROW();
 	BCOLTXT("Relationships","2");
 	BCOLINTEXTAREAID('dmwsprogress_relationshipsnotes','dmwsprogress_relationshipsnotes',$GLOBALS{'dmwsprogress_relationshipsnotes'},"3","8");
 	BCOLTXT("","2");
-	B_ROW();	
+	B_ROW();
 	BROW();
 	BCOLTXT("Housing","2");
 	BCOLINTEXTAREAID('dmwsprogress_housingnotes','dmwsprogress_housingnotes',$GLOBALS{'dmwsprogress_housingnotes'},"3","8");
 	BCOLTXT("","2");
-	B_ROW();	
+	B_ROW();
 	BROW();
 	BCOLTXT("Finance","2");
 	BCOLINTEXTAREAID('dmwsprogress_financenotes','dmwsprogress_financenotes',$GLOBALS{'dmwsprogress_financenotes'},"3","8");
@@ -1856,7 +1923,7 @@ function COMPLEXContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
 	XHRCLASS('underline');
 	XPTXTCOLOR("Note:- The Complexity Assessment is now being recorded as the latest position - with any new updates modifying the previous assessment.","green");
 	XHR();
-	
+
 	/*
 	XDIV("complexdatabuttons","");
 	$dmwsvisita = Get_Array('dmwsvisit',$thisdmwssu_id);
@@ -1869,17 +1936,17 @@ function COMPLEXContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
 	    if ($GLOBALS{'dmwsvisit_type'} == "First" ) {
 	        BINBUTTONIDCLASSSPECIAL($dmwsvisit_id,"complexdatabutton","FiOn".$activesuffix,"Fi");
 	    }
-	    
+
 	    if ($GLOBALS{'dmwsvisit_type'} == "Subsequent" ) {
 	        BINBUTTONIDCLASSSPECIAL($dmwsvisit_id,"complexdatabutton","SuOn".$activesuffix,"Su");
 	    }
-	    
+
 	    if ($GLOBALS{'dmwsvisit_type'} == "Discharge" ) {
 	        BINBUTTONIDCLASSSPECIAL($dmwsvisit_id,"complexdatabutton","DiOn".$activesuffix,"Di");
 	    }
 	    if ($GLOBALS{'dmwsvisit_type'} == "FollowUp" ) {
 	        BINBUTTONIDCLASSSPECIAL($dmwsvisit_id,"complexdatabutton","FoOn".$activesuffix,"Fo");
-	    }	    
+	    }
 	}
 	if ($thisvisitid == "New") {
 	    if ($latestvisittype == "" ) {
@@ -1900,21 +1967,21 @@ function COMPLEXContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
 	        if ( $thisvisittype == "Discharge" ){
 	            BINBUTTONIDCLASSSPECIAL("New","complexdatabutton","DiOffActive","Di");
 	        }
-	    }  
-	    if ($latestvisittype == "Discharge" ) {	        
+	    }
+	    if ($latestvisittype == "Discharge" ) {
 	        BINBUTTONIDCLASSSPECIAL("New","complexdatabutton","FoOffActive","Fo");
 	    }
 	    if ($latestvisittype == "FollowUp" ) {
 	        BINBUTTONIDCLASSSPECIAL("New","complexdatabutton","FoOffActive","Fo");
 	    }
-	}  
+	}
 	X_DIV("complexdatabuttons");
 	XBR();
 	*/
-	
+
 	BROW();
 	BCOLTXT("","10");
-	B_ROW();	
+	B_ROW();
 
 	XPTXT("Please complete the Core Issues Assessment by selecting the issues affecting the service user and rating their impact.");
 	XBR();
@@ -1925,7 +1992,7 @@ function COMPLEXContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
 	BCOL("1");	BINBUTTONIDSPECIAL('dmwscomplexity_add_new',"success","+"); B_COL();
 	B_ROW();
 	XBR();
-	$ctypehash = Get_SelectArrays_Hash ("dmwscomplexitytype","dmwscomplexitytype_id","dmwscomplexitytype_name","dmwscomplexitytype_name","","" );		
+	$ctypehash = Get_SelectArrays_Hash ("dmwscomplexitytype","dmwscomplexitytype_id","dmwscomplexitytype_name","dmwscomplexitytype_name","","" );
 	$thiscomplexityvisitid = "";
 	Check_Data('dmwscomplexity',$thisdmwssu_id,"Latest");
 	if ($GLOBALS{'IOWARNING'} == "0") {
@@ -1939,10 +2006,10 @@ function COMPLEXContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
 	        }
 	    }
 	}
-	
+
 	Check_Data('dmwscomplexity',$thisdmwssu_id,$thiscomplexityvisitid);
 	if ($GLOBALS{'IOWARNING'} == "0") {
-		for( $ci = 1; $ci<13; $ci++ ) {	
+		for( $ci = 1; $ci<13; $ci++ ) {
 			if ($GLOBALS{'dmwscomplexity_issuetype'.$ci} != "") {
 			    XDIV('dmwscomplexity_issuediv_'.$ci,"");
 			    BROW();
@@ -1960,30 +2027,30 @@ function COMPLEXContentOutput($thisdmwssu_id,$thisvisittype,$thisvisitid) {
 			    XINHIDID('dmwscomplexity_issuescore_'.$ci, 'dmwscomplexity_issuescore_'.$ci, $GLOBALS{'dmwscomplexity_issuescore'.$ci});
 			    XINHIDID('dmwscomplexity_issueweight_'.$ci, 'dmwscomplexity_issueweight_'.$ci, $GLOBALS{'dmwscomplexitytype_weighting'});
 			    XHR();
-			    X_DIV('dmwscomplexity_issuediv_'.$ci);		
+			    X_DIV('dmwscomplexity_issuediv_'.$ci);
 			}
 		}
 	}
-	
+
 	XDIV("dmwscomplexitylistend","");
 	X_DIV("dmwscomplexitylistend");
-	
+
 	BROW();
 	BCOLTXT("<b>Total Score</b>", "1");
 	BCOLINTXTID("dmwscomplexity_score", "dmwscomplexity_score", $GLOBALS{'dmwscomplexity_score'}, 1);  // CHECK CHANGE NAME
 	BCOLTXT("","10");
 	B_ROW();
-	
+
 	XBR();
 	// XH3("Core Issues Complexity Matrix");
 	// XPTXTCOLOR("Please note that the complexity visualisation is being changed and may need some more calibration before being finalised.","orange");
-	
+
 	print('<div id="complexitybackdrop" style="background-image: url('.$GLOBALS{'site_asseturl'}.'/ComplexityBackdrop4.png); height: 80px; width: 900px;"></div>');
-	print('<div id="complexitymarker" style="background-color: white; height: 30px; width: 30px;"></div>');	
-	
+	print('<div id="complexitymarker" style="background-color: white; height: 30px; width: 30px;"></div>');
+
 	XINHID('dmwscomplexity_endfield',"");
-	
-	
+
+
 }
 
 function OUTCOMESContentOutput($thisdmwssu_id) {
@@ -1993,7 +2060,7 @@ function OUTCOMESContentOutput($thisdmwssu_id) {
     XHRCLASS('underline');
     XPTXT("Please check the relevant boxes to assess the impact of DMWS care on the various topics.");
     XHR();
-    
+
     XH4("Primary Care");
     XPTXT("Please select all that apply");
     BROW();
@@ -2013,7 +2080,7 @@ function OUTCOMESContentOutput($thisdmwssu_id) {
     X_DIV("outcomesdiv1","");
     B_COL();
     B_ROW();
-    
+
     XHR();
     XH4("Secondary Care");
     XPTXT("Please select all that apply");
@@ -2140,7 +2207,7 @@ function ACTSContentOutput($thisdmwssu_id) {
     XHRCLASS('underline');
     XPTXT("Please review the agreed actions.");
     XBR();
-    
+
     BROWEQH();
     BCOLTXTCOLOR("<b>Date/Time</b>","1","gray","white");
     BCOLTXTCOLOR("<b>Issue</b>","3","gray","white");
@@ -2152,12 +2219,12 @@ function ACTSContentOutput($thisdmwssu_id) {
     BCOLTXTCOLOR("<b>Completion Date</b>","2","gray","white");
     BCOL("1");	BINBUTTONIDSPECIAL('dmwsaction_add_new',"success","+"); B_COL();
     B_ROW();
-    
+
     $timebanda = Array();
     $dmwstimebanda = Get_Array('dmwstimeband');
     foreach ($dmwstimebanda as $dmwstimeband_id) {
         Get_Data('dmwstimeband',$dmwstimeband_id);
-        
+
         if ($GLOBALS{'dmwstimeband_dmwscontractid'} == $GLOBALS{'dmwssu_dmwscontractid'} && $GLOBALS{'dmwstimeband_dmwscontractlocationid'} == $GLOBALS{'dmwssu_dmwscontractlocationid'}) {
             $timebanda[$dmwstimeband_id] = $GLOBALS{'dmwstimeband_name'}." ".$GLOBALS{'dmwstimeband_start'}."-".$GLOBALS{'dmwstimeband_end'};
         }
@@ -2165,7 +2232,7 @@ function ACTSContentOutput($thisdmwssu_id) {
     if (sizeof($timebanda) == '0'){
         foreach ($dmwstimebanda as $dmwstimeband_id) {
             Get_Data('dmwstimeband',$dmwstimeband_id);
-            
+
             if ($GLOBALS{'dmwstimeband_dmwscontractid'} == "Default") {
                 $timebanda[$dmwstimeband_id] = $GLOBALS{'dmwstimeband_name'}." ".$GLOBALS{'dmwstimeband_start'}."-".$GLOBALS{'dmwstimeband_end'};
             }
@@ -2198,7 +2265,7 @@ function ACTSContentOutput($thisdmwssu_id) {
         }
     }
     XDIV("dmwsactionlistend","");
-    X_DIV("dmwsactionlistend"); 
+    X_DIV("dmwsactionlistend");
 }
 
 function REFSOUTContentOutput($thisdmwssu_id) {
@@ -2212,16 +2279,61 @@ function REFSOUTContentOutput($thisdmwssu_id) {
 	BCOLTXTCOLOR("<b>Comment</b>","3","gray","white");
 	BCOL("1"); BINBUTTONIDSPECIAL('dmwsserviceprovided_add_new',"success","+"); B_COL();
 	B_ROW();
-	
-	$dmwsserviceprovideda = Get_Array('dmwsserviceprovided',$thisdmwssu_id);
+	//RETURNPOINT
+        //$dmwscontractlocationa = Get_Array_Select('dmwscontractlocation','','dmwscontractlocation_id,dmwscontractlocation_disabled');
+        // print_r($dmwscontractlocationa);
+        // foreach ($dmwscontractlocationa as $dmwscontractlocation_id) {
+        // for ($i=0; $i < sizeof($dmwscontractlocationa); $i++) {
+        // 		$dmwscontractlocation_id = $dmwscontractlocationa[$i][0];
+        //
+        // 		$disabledLocations[$dmwscontractlocationa[$i][0]] = $dmwscontractlocationa[$i][1];
+
+
+	$dmwsserviceprovideda = Get_Array('dmwsserviceprovided',$thisdmwssu_id);//services used
+	$dmwsservicetype = Get_Array_Select('dmwsservicetype','','dmwsservicetype_id,dmwsservicetype_disabled');//services available
+	$disabled = array();
+	for ($i=0; $i < sizeof($dmwsservicetype); $i++) {
+		if ($dmwsservicetype[$i][1] != "Yes") {
+			$disabled[$dmwsservicetype[$i][0]] = "0";//fixes nulls
+		}else{
+			$disabled[$dmwsservicetype[$i][0]] = "1";
+		}
+		// print_r($disabled);
+		// echo "<br>";
+		// print($dmwsserviceprovideda[$i][0]);
+		// echo ":";
+		// print($dmwsserviceprovideda[$i][1]);
+		// echo "<br>";
+	}
+	// print_r($disabled);
+	echo "<div id='disabledServiceType' style='display:none;'>";
+		$hash = Get_SelectArrays_Hash ("dmwsservicetype","dmwsservicetype_id","dmwsservicetype_name","dmwsservicetype_id","","" );
+		$id = '';
+		$name = '';
+		$value = $GLOBALS{'dmwsserviceprovided_dmwsservicetypeid'};
+		$cols = '2';
+		BCOLINSELECTHASHIDCLASSDISABLED ($hash,$id,$class,$name,$value,$cols,$disabled);
+	echo "</div>";
+	// echo "<br>";
+	// print_r ($dmwsserviceprovideda);
+	// echo "<br>";
+	// $dmwscontractlocationa = Get_Array_Select('dmwscontractlocation','','dmwscontractlocation_id,dmwscontractlocation_disabled');
 	foreach ($dmwsserviceprovideda as $dmwsserviceprovided_id) {
 	    Check_Data('dmwsserviceprovided',$thisdmwssu_id,$dmwsserviceprovided_id);
-	    if ($GLOBALS{'IOWARNING'} == "0") {	   
+	    print ($GLOBALS{'IOWARNING'});
+	    if ($GLOBALS{'IOWARNING'} == "0") {
         	BROW();
         	XINHID('dmwsserviceprovided_startfield_'.$dmwsserviceprovided_id,"");
         	BCOLINDATEID('dmwsserviceprovided_date_'.$dmwsserviceprovided_id,'dmwsserviceprovided_date_'.$dmwsserviceprovided_id.'_dd/mm/yyyy',YYYY_MM_DDtoDDsMMsYYYY($GLOBALS{'dmwsserviceprovided_date'}),"dd/mm/yyyy","1");
         	$xhash = Get_SelectArrays_Hash ("dmwsservicetype","dmwsservicetype_id","dmwsservicetype_name","dmwsservicetype_id","","" );
-        	BCOLINSELECTHASHID ($xhash,'dmwsserviceprovided_dmwsservicetypeid_'.$dmwsserviceprovided_id,'dmwsserviceprovided_dmwsservicetypeid_'.$dmwsserviceprovided_id,$GLOBALS{'dmwsserviceprovided_dmwsservicetypeid'},"2");
+					// BCOLINSELECTHASHID
+					$hash = $xhash;
+					$id = 'dmwsserviceprovided_dmwsservicetypeid_'.$dmwsserviceprovided_id;
+					$name = 'dmwsserviceprovided_dmwsservicetypeid_'.$dmwsserviceprovided_id;
+					$value = $GLOBALS{'dmwsserviceprovided_dmwsservicetypeid'};
+					$cols = '2';
+					BCOLINSELECTHASHIDCLASSDISABLED ($hash,$id,$class,$name,$value,$cols,$disabled);
+        	// BCOLINSELECTHASHID ($xhash,'dmwsserviceprovided_dmwsservicetypeid_'.$dmwsserviceprovided_id,'dmwsserviceprovided_dmwsservicetypeid_'.$dmwsserviceprovided_id,$GLOBALS{'dmwsserviceprovided_dmwsservicetypeid'},"2");
         	BCOLINTEXTAREAID('dmwsserviceprovided_comment_'.$dmwsserviceprovided_id,'dmwsserviceprovided_comment_'.$dmwsserviceprovided_id,$GLOBALS{'dmwsserviceprovided_comment'},"3","3");
         	BCOL("1"); BINBUTTONIDCLASSSPECIAL('dmwsserviceprovided_delete_'.$dmwsserviceprovided_id,"dmwsserviceprovideddelete","danger","x"); B_COL();
         	XINHID('dmwsserviceprovided_endfield_'.$dmwsserviceprovided_id,"");
@@ -2232,7 +2344,6 @@ function REFSOUTContentOutput($thisdmwssu_id) {
 	XDIV("dmwsserviceprovidedlistend","");
 	X_DIV("dmwsserviceprovidedlistend");
 	XBR();
-	
 	XH3("Referrals");
 	XHRCLASS('underline');
 	XPTXT("Please review the agreed referrals.");
@@ -2242,15 +2353,15 @@ function REFSOUTContentOutput($thisdmwssu_id) {
 	BCOLTXTCOLOR("<b>Organisation Name</b>","2","gray","white");
 	BCOLTXTCOLOR("<b>Contact Details, Role & Intervention</b>","3","gray","white");
 	BCOLTXTCOLOR("<b>Funding / Grant Secured / Consent</b>","1","gray","white");
-	BCOLTXTCOLOR("<b>SU Feedback</b>","2","gray","white");	
-	BCOLTXTCOLOR("<b>Comments</b>","2","gray","white");	
+	BCOLTXTCOLOR("<b>SU Feedback</b>","2","gray","white");
+	BCOLTXTCOLOR("<b>Comments</b>","2","gray","white");
 	BCOL("1"); BINBUTTONIDSPECIAL('dmwsreferral_add_new',"success","+"); B_COL();
 	B_ROW();
 	$reforghash = Get_SelectArrays_Hash ("dmwsreferralorg","dmwsreferralorg_id","dmwsreferralorg_name","dmwsreferralorg_id","","" );
 	$specreforghash = Get_SelectArrays_Hash ("dmwsspecialistreferralorg","dmwsspecialistreferralorg_id","dmwsspecialistreferralorg_name","dmwsspecialistreferralorg_id","","" );
 	$dmwsreferrala = Get_Array('dmwsreferral',$thisdmwssu_id);
 	foreach ($dmwsreferrala as $dmwsreferral_id) {
-		Check_Data('dmwsreferral',$thisdmwssu_id,$dmwsreferral_id);			
+		Check_Data('dmwsreferral',$thisdmwssu_id,$dmwsreferral_id);
 		if ($GLOBALS{'IOWARNING'} == "0") {
 		    BROW();
 		    XINHID('dmwsreferral_startfield_'.$dmwsreferral_id,"");
@@ -2264,15 +2375,15 @@ function REFSOUTContentOutput($thisdmwssu_id) {
 		    B_COL();
 		    BCOL("2");
 		    BCOLINTXTIDCLASS('dmwsreferral_orgname_'.$dmwsreferral_id,'mand','dmwsreferral_orgname_'.$dmwsreferral_id,$GLOBALS{'dmwsreferral_orgname'},"2");
-		    BINCHECKBOXYESNOCLASS ("dmwsreferral_gdprcompliant_".$dmwsreferral_id,'mandcb',$GLOBALS{'dmwsreferral_gdprcompliant'},"Confirmed GDPR Compliant"); 
+		    BINCHECKBOXYESNOCLASS ("dmwsreferral_gdprcompliant_".$dmwsreferral_id,'mandcb',$GLOBALS{'dmwsreferral_gdprcompliant'},"Confirmed GDPR Compliant");
 		    B_COL();
 		    BCOLINTEXTAREAIDCLASS('dmwsreferral_roleintervention_'.$dmwsreferral_id,'mand','dmwsreferral_roleintervention_'.$dmwsreferral_id,$GLOBALS{'dmwsreferral_roleintervention'},"3","3");
 		    BCOL("1");
 		    BINTXTID('dmwsreferral_fundingsecured_'.$dmwsreferral_id,'dmwsreferral_fundingsecured_'.$dmwsreferral_id,$GLOBALS{'dmwsreferral_fundingsecured'});
-		    BINCHECKBOXYESNOCLASS ("dmwsreferral_suconsent_".$dmwsreferral_id,'mandcb',$GLOBALS{'dmwsreferral_suconsent'},"Consent to Contact","1"); 
-		    B_COL(); 
+		    BINCHECKBOXYESNOCLASS ("dmwsreferral_suconsent_".$dmwsreferral_id,'mandcb',$GLOBALS{'dmwsreferral_suconsent'},"Consent to Contact","1");
+		    B_COL();
 		    $xhash = Get_SelectArrays_Hash ("dmwssufeedbacktype","dmwssufeedbacktype_id","dmwssufeedbacktype_name","dmwssufeedbacktype_id","","" );
-			BCOLINSELECTHASHID ($xhash,'dmwsreferral_sufeedback_'.$dmwsreferral_id,'dmwsreferral_sufeedback_'.$dmwsreferral_id,$GLOBALS{'dmwsreferral_sufeedback'},"2");			
+			BCOLINSELECTHASHID ($xhash,'dmwsreferral_sufeedback_'.$dmwsreferral_id,'dmwsreferral_sufeedback_'.$dmwsreferral_id,$GLOBALS{'dmwsreferral_sufeedback'},"2");
 		    BCOLINTEXTAREAID('dmwsreferral_comment_'.$dmwsreferral_id,'dmwsreferral_comment_'.$dmwsreferral_id,$GLOBALS{'dmwsreferral_comment'},"3","2");
 		    BCOL("1"); BINBUTTONIDCLASSSPECIAL('dmwsreferral_delete_'.$dmwsreferral_id,"dmwsreferraldelete","danger","x"); B_COL();
 		    XINHID('dmwsreferral_endfield_'.$dmwsreferral_id,"");
@@ -2290,15 +2401,15 @@ function NOTEContentOutput($thisdmwssu_id) {
 	XHRCLASS('underline');
 	XPTXT("Freeform Notes Area.");
 	XHR();
-	# name, value, rows, cols  
+	# name, value, rows, cols
 	XINTEXTAREA ("dmwssu_notes",$GLOBALS{'dmwssu_notes'},"8","120");
 
-	
+
 	XH3("Attachments");
 	XPTXT("Note: Attachments may only be downloaded whilst you have an online connection.");
 	XHRCLASS('underline');
 	XBR();
-	
+
 	BROWEQH();
 	BCOLTXTCOLOR("<b>Title</b>","3","gray","white");
 	BCOLTXTCOLOR("<b>Description</b>","3","gray","white");
@@ -2322,13 +2433,13 @@ function NOTEContentOutput($thisdmwssu_id) {
 	        B_COL();
 	        XINHID('dmwsattachment_filename_'.$dmwsattachment_id,$GLOBALS{'dmwsattachment_filename'});
 	        BCOL("1");
-	        if ( $GLOBALS{'site_clientservermode'} == "Client") {	            
+	        if ( $GLOBALS{'site_clientservermode'} == "Client") {
 	            if ($dmwsattachment_id[0] == "X") {
 	                $link = YPGMLINK("assetfiledownloadin.php").YPGMSTDPARMS();
 	            } else {
 	                $link = $GLOBALS{'site_synchroniseurl'}."/site_php/".$GLOBALS{'codeversion'}."_assetfiledownloadin.php";
 	                $link = $link.'?ServiceId=dmws&DomainId=dmwsportal&PersonId=&ModeId=1&SessionId=&LoginModeId=1&MenuId='.$GLOBALS{'LOGIN_menu_id'}.'&FrameId='.$GLOBALS{'LOGIN_frame_id'};
-	            }	        
+	            }
 	        } else {
 	            $link = YPGMLINK("assetfiledownloadin.php").YPGMSTDPARMS();
 	        }
@@ -2340,13 +2451,13 @@ function NOTEContentOutput($thisdmwssu_id) {
 	        B_COL();
 	        XINHID('dmwsattachment_endfield_'.$dmwsattachment_id,"");
 	        B_ROW();
-	        XHR();	
+	        XHR();
 	    }
 	}
 
 	XDIV("dmwsattachmentlistend","");
-	X_DIV("dmwsattachmentlistend"); 
-	
+	X_DIV("dmwsattachmentlistend");
+
 }
 
 function VisitToolTipText($tvisitid) {
@@ -2354,7 +2465,7 @@ function VisitToolTipText($tvisitid) {
     else {
         if ($tvisitid[0] == "T") {
             $timestamp = ltrim($tvisitid, 'T');
-            return (TimestamptoDDthMMMhhmm ($timestamp));    
+            return (TimestamptoDDthMMMhhmm ($timestamp));
         } else {
             return ($tvisitid);
         }
@@ -2376,7 +2487,7 @@ function VisitToolTipTextDateTime($visitdate,$visittime) {
 
 function Dmws_DMWSSUDELETECONFIRM_Output ($dmwssu_id,$list,$liststatus) {
     Get_Data("dmwssux",$dmwssu_id);
-    XH3("Delete Service User - ".$dmwssu_id." - ".$GLOBALS{'dmwssux_fname'}." ".$GLOBALS{'dmwssux_sname'}); 
+    XH3("Delete Service User - ".$dmwssu_id." - ".$GLOBALS{'dmwssux_fname'}." ".$GLOBALS{'dmwssux_sname'});
     XPTXT("Are you sure you want to delete this service user");
     XBR();
     XFORM("dmwssudeleteaction.php","deletesu");
@@ -2442,8 +2553,8 @@ function AttachmentUploadPopup($thisdmwssu_id) {
     // XPTXT("Please provide the attachment details.");
     XBR();
     BROW();
-    BCOLTXT("Attachment Title","3");     
-    BCOLINTXTID('dmwsattachment_title','dmwsattachment_title',"","9");  
+    BCOLTXT("Attachment Title","3");
+    BCOLINTXTID('dmwsattachment_title','dmwsattachment_title',"","9");
     B_ROW();
     XHR();
     BROW();
@@ -2467,14 +2578,14 @@ function AttachmentUploadPopup($thisdmwssu_id) {
     $fileuploadmaxwidth = "800";
     XINDROPZONEFILE($filefieldname, $fileviewwidth, $filename, $fileuploadto);
     B_COL();
-    B_ROW(); 
+    B_ROW();
     XBR();
     XHR();
     XINBUTTONID("attachmentupload","Save");
     XINBUTTONIDSPECIAL("attachmentuploadcancel","warning","Cancel");
-    X_FORM();    
+    X_FORM();
     X_DIV("attachmentuploadpopup");
-    
+
     DropZoneBasicFileUpload_Popup ($filefieldname,$filename,$fileuploadto,$fileuploadid,$fileuploadmaxwidth);
 }
 
@@ -2571,25 +2682,25 @@ function Dmws_SETUPDMWSSERVICESTATUS_Output() {
 
 function Dmws_SETUPDMWSLOCATIONTYPE_Output() {
 	$parm0 = "";
-	$parm0 = $parm0."Medical Location type"."|"; # pagetitle
-	$parm0 = $parm0."dmwslocationtype"."|"; # primetable
-	$parm0 = $parm0."|"; # othertables
-	$parm0 = $parm0."dmwslocationtype_id|"; # keyfieldname
-	$parm0 = $parm0."dmwslocationtype_id|"; # sortfieldname
-	$parm0 = $parm0."20|"; # pagination
-	$parm0 = $parm0."No"; # enable add-copy
+	$parm0 .="Medical Location type"."|"; # pagetitle
+	$parm0 .="dmwslocationtype"."|"; # primetable
+	$parm0 .="|"; # othertables
+	$parm0 .="dmwslocationtype_id|"; # keyfieldname
+	$parm0 .="dmwslocationtype_id|"; # sortfieldname
+	$parm0 .="20|"; # pagination
+	$parm0 .="No"; # enable add-copy
 	$parm1 = "";
-	$parm1 = $parm1."dmwslocationtype_id|Yes|Medical Location type Id|80|Yes|Medical Location type Id|KeyText,10,22^";
-	$parm1 = $parm1."dmwslocationtype_name|Yes|Medical Location type|80|Yes|Name|InputText,15,30^";
-	$parm1 = $parm1."dmwslocationtype_description||Description|80|Yes|Description|InputText,30,60^";
-	$parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";
-	$parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";
+	$parm1 .="dmwslocationtype_id|Yes|Medical Location type Id|80|Yes|Medical Location type Id|KeyText,10,22^";
+	$parm1 .="dmwslocationtype_name|Yes|Medical Location type|80|Yes|Name|InputText,15,30^";
+	$parm1 .="dmwslocationtype_description||Description|80|Yes|Description|InputText,30,60^";
+	$parm1 .="generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";
+	$parm1 .="generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";
 	GenericHandler_Output ($parm0,$parm1);
 }
 
 function Dmws_SETUPDMWSCONTRACTLOCATION_CSSJS () {
-    $GLOBALS{'SITECSSOPTIONAL'} = "jqdatatables";
-    $GLOBALS{'SITEJSOPTIONAL'} = "globalroutines,ioroutines,generichandler,jqdatatablesmin,personselectionpopup";
+    $GLOBALS{'SITECSSOPTIONAL'} = "jqdatatables,jqueryconfirm";
+    $GLOBALS{'SITEJSOPTIONAL'} = "globalroutines,ioroutines,generichandler,jqdatatablesmin,personselectionpopup,jqueryconfirm";
     $GLOBALS{'SITEPOPUPHTML'} = "PersonSelection_Popup";
 }
 
@@ -2608,6 +2719,7 @@ function Dmws_SETUPDMWSCONTRACTLOCATION_Output() {
 	$parm1 = $parm1."dmwscontractlocation_description||Description|80|Yes|Description|InputText,30,60^";
 	$parm1 = $parm1."dmwscontractlocation_mgrlist||||Yes|Management|InputPerson,80,160,managers,Lookup^";
 	$parm1 = $parm1."dmwscontractlocation_officerlist||||Yes|Officers|InputPerson,80,160,officers,Lookup^";
+        $parm1 = $parm1."dmwscontractlocation_disabled|Yes|Disabled|10|Yes|Disabled|InputRadioFromList,Yes+No^";               
 	$parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";
 	$parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";
 	GenericHandler_Output ($parm0,$parm1);
@@ -2624,7 +2736,7 @@ field,officers,Select,dmwscontractlocation_officerlist_input,dmwscontractlocatio
 "buildfulllist"
 );
 }
-	
+
 function Dmws_SETUPDMWSSAFEGUARDINGISSUETYPE_Output() {
 	$parm0 = "";
 	$parm0 = $parm0."SU Safeguarding issue type"."|"; # pagetitle
@@ -2965,6 +3077,7 @@ function Dmws_SETUPDMWSSERVICETYPE_Output() {
 	$parm1 = $parm1."dmwsservicetype_id|Yes|Service Type Id|80|Yes|Service type Id Id|KeyText,10,15^";
 	$parm1 = $parm1."dmwsservicetype_name|Yes|Service Type|80|Yes|Name|InputText,15,30^";
 	$parm1 = $parm1."dmwsservicetype_description||Service type|80|Yes|Description|InputText,30,60^";
+	$parm1 = $parm1."dmwsservicetype_disabled|Yes|Disabled|10|Yes|Disabled|InputRadioFromList,Yes+No^";        
 	$parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";
 	$parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";
 	GenericHandler_Output ($parm0,$parm1);
@@ -3022,7 +3135,7 @@ function Dmws_SETUPDMWSCONTACTTYPE_Output() {
 	$parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";
 	GenericHandler_Output ($parm0,$parm1);
 }
-     
+
 function Dmws_SETUPDMWSCONSENTWITHDRAWALTYPE_Output() {
     $parm0 = "";
     $parm0 = $parm0."Consent Withdrawal type"."|"; # pagetitle
@@ -3057,82 +3170,82 @@ function Dmws_SETUPDMWSSPECIALISTREFERRALORG_Output() {
 	GenericHandler_Output ($parm0,$parm1);
 }
 
-function Dmws_SETUPDMWSVISITLOCATION_Output() {                                                                                                                           
-	$parm0 = "";                                                                                                                                                        
-	$parm0 = $parm0."Visit location"."|"; # pagetitle                                                                                                                     
-	$parm0 = $parm0."dmwsvisitlocation"."|"; # primetable                                                                                                                 
-	$parm0 = $parm0."|"; # othertables                                                                                                                                  
-	$parm0 = $parm0."dmwsvisitlocation_id|"; # keyfieldname                                                                                                               
-	$parm0 = $parm0."dmwsvisitlocation_id|"; # sortfieldname                                                                                                              
-	$parm0 = $parm0."20|"; # pagination                                                                                                                                 
-	$parm0 = $parm0."No"; # enable add-copy                                                                                                                             
-	$parm1 = "";                                                                                                                                                        
-	$parm1 = $parm1."dmwsvisitlocation_id|Yes|Visit location Id|80|Yes|Visit location Id|KeyText,10,15^";                                                                        
-	$parm1 = $parm1."dmwsvisitlocation_type|Yes|Visit location|80|Yes|Name|InputText,15,30^";                                                              
+function Dmws_SETUPDMWSVISITLOCATION_Output() {
+	$parm0 = "";
+	$parm0 = $parm0."Visit location"."|"; # pagetitle
+	$parm0 = $parm0."dmwsvisitlocation"."|"; # primetable
+	$parm0 = $parm0."|"; # othertables
+	$parm0 = $parm0."dmwsvisitlocation_id|"; # keyfieldname
+	$parm0 = $parm0."dmwsvisitlocation_id|"; # sortfieldname
+	$parm0 = $parm0."20|"; # pagination
+	$parm0 = $parm0."No"; # enable add-copy
+	$parm1 = "";
+	$parm1 = $parm1."dmwsvisitlocation_id|Yes|Visit location Id|80|Yes|Visit location Id|KeyText,10,15^";
+	$parm1 = $parm1."dmwsvisitlocation_type|Yes|Visit location|80|Yes|Name|InputText,15,30^";
 	$parm1 = $parm1."dmwsvisitlocation_postcode||Postcode|80|Yes|Postcode|InputText,10,15^";
-	$parm1 = $parm1."dmwsvisitlocation_address||Address|80|Yes|Address|InputText,10,15^";                                                                  
-	$parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";                                                                                       
-	$parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";                                                                                        
-	GenericHandler_Output ($parm0,$parm1);                                                                                                                              
-}                                                                                                                                                                       
-                                                                                                                                                       
-function Dmws_SETUPDMWSCOMPLEXITYSCORE_Output() {                                                                                                                        
-	$parm0 = "";                                                                                                                                                        
-	$parm0 = $parm0."Complexity score"."|"; # pagetitle                                                                                                                   
-	$parm0 = $parm0."dmwscomplexityscore"."|"; # primetable                                                                                                               
-	$parm0 = $parm0."|"; # othertables                                                                                                                                  
-	$parm0 = $parm0."dmwscomplexityscore_id|"; # keyfieldname                                                                                                             
-	$parm0 = $parm0."dmwscomplexityscore_id|"; # sortfieldname                                                                                                            
-	$parm0 = $parm0."20|"; # pagination                                                                                                                                 
-	$parm0 = $parm0."No"; # enable add-copy                                                                                                                             
-	$parm1 = "";                                                                                                                                                        
-	$parm1 = $parm1."dmwscomplexityscore_id|Yes|Complexity score|80|Yes|Complexity score Id Id|KeyText,10,15^";                                                                  
-	$parm1 = $parm1."dmwscomplexityscore_date|Yes|Complexity score|80|Yes|Complexity score date Name|InputText,10,15^";                                                       
-	$parm1 = $parm1."dmwscomplexityscore_score|Yes|Complexity score|80|Yes|Complexity score Name|InputText,10,15^";                                                                                              
-	$parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";                                                                                       
-	$parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";                                                                                        
-	GenericHandler_Output ($parm0,$parm1);                                                                                                                              
-}                                                                                                                                                                       
-                                                                                                                                                     
-function Dmws_SETUPDMWSTIMEBAND_Output() {                                                                                                                       
-	$parm0 = "";                                                                                                                                                        
-	$parm0 = $parm0."Time band"."|"; # pagetitle                                                                                                                 
-	$parm0 = $parm0."dmwstimeband"."|"; # primetable                                                                                                             
-	$parm0 = $parm0."|"; # othertables                                                                                                                                  
-	$parm0 = $parm0."dmwstimeband_id|"; # keyfieldname                                                                                                           
-	$parm0 = $parm0."dmwstimeband_id|"; # sortfieldname                                                                                                          
-	$parm0 = $parm0."20|"; # pagination                                                                                                                                 
-	$parm0 = $parm0."No"; # enable add-copy                                                                                                                             
-	$parm1 = "";                                                                                                                                                        
+	$parm1 = $parm1."dmwsvisitlocation_address||Address|80|Yes|Address|InputText,10,15^";
+	$parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";
+	$parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";
+	GenericHandler_Output ($parm0,$parm1);
+}
+
+function Dmws_SETUPDMWSCOMPLEXITYSCORE_Output() {
+	$parm0 = "";
+	$parm0 = $parm0."Complexity score"."|"; # pagetitle
+	$parm0 = $parm0."dmwscomplexityscore"."|"; # primetable
+	$parm0 = $parm0."|"; # othertables
+	$parm0 = $parm0."dmwscomplexityscore_id|"; # keyfieldname
+	$parm0 = $parm0."dmwscomplexityscore_id|"; # sortfieldname
+	$parm0 = $parm0."20|"; # pagination
+	$parm0 = $parm0."No"; # enable add-copy
+	$parm1 = "";
+	$parm1 = $parm1."dmwscomplexityscore_id|Yes|Complexity score|80|Yes|Complexity score Id Id|KeyText,10,15^";
+	$parm1 = $parm1."dmwscomplexityscore_date|Yes|Complexity score|80|Yes|Complexity score date Name|InputText,10,15^";
+	$parm1 = $parm1."dmwscomplexityscore_score|Yes|Complexity score|80|Yes|Complexity score Name|InputText,10,15^";
+	$parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";
+	$parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";
+	GenericHandler_Output ($parm0,$parm1);
+}
+
+function Dmws_SETUPDMWSTIMEBAND_Output() {
+	$parm0 = "";
+	$parm0 = $parm0."Time band"."|"; # pagetitle
+	$parm0 = $parm0."dmwstimeband"."|"; # primetable
+	$parm0 = $parm0."|"; # othertables
+	$parm0 = $parm0."dmwstimeband_id|"; # keyfieldname
+	$parm0 = $parm0."dmwstimeband_id|"; # sortfieldname
+	$parm0 = $parm0."20|"; # pagination
+	$parm0 = $parm0."No"; # enable add-copy
+	$parm1 = "";
 	$parm1 = $parm1."dmwstimeband_id|Yes|Time band Id|80|Yes|Time band Id|KeyText,10,15^";
 	$parm1 = $parm1."dmwstimeband_name|Yes|Time band|80|Yes|Name|InputText,20,30^";
-	$parm1 = $parm1."dmwstimeband_start|Yes|Start|80|Yes|Time band start|InputText,10,15^";                                                 
+	$parm1 = $parm1."dmwstimeband_start|Yes|Start|80|Yes|Time band start|InputText,10,15^";
 	$parm1 = $parm1."dmwstimeband_end|Yes|End|80|Yes|Time band end|InputText,10,15^";
 	$parm1 = $parm1."dmwstimeband_dmwscontractid|Yes|Contract Id|80|Yes|Contract Id|InputText,30,15^";
 	$parm1 = $parm1."dmwstimeband_dmwscontractlocationid|Yes|Contract Location Id|80|Yes|Contract Location Id|InputText,30,25^";
-	$parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";                                                                                       
-	$parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";                                                                                        
-	GenericHandler_Output ($parm0,$parm1);                                                                                                                              
-}                                                                                                                                                                       
-                                                                                                                                                           
-function Dmws_SETUPDMWSCOMPLEXITYTYPE_Output() {                                                                                                                           
-	$parm0 = "";                                                                                                                                                        
-	$parm0 = $parm0."Complexity Type"."|"; # pagetitle                                                                                                                    
-	$parm0 = $parm0."dmwscomplexitytype"."|"; # primetable                                                                                                                    
-	$parm0 = $parm0."|"; # othertables                                                                                                                                  
-	$parm0 = $parm0."dmwscomplexitytype_id|"; # keyfieldname                                                                                                                  
-	$parm0 = $parm0."dmwscomplexitytype_id|"; # sortfieldname                                                                                                                 
-	$parm0 = $parm0."20|"; # pagination                                                                                                                                 
-	$parm0 = $parm0."No"; # enable add-copy                                                                                                                             
-	$parm1 = "";                                                                                                                                                        
-	$parm1 = $parm1."dmwscomplexitytype_id|Yes|Id|80|Yes|Complexity Type Id|KeyText,10,15^";                                                                         
+	$parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";
+	$parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";
+	GenericHandler_Output ($parm0,$parm1);
+}
+
+function Dmws_SETUPDMWSCOMPLEXITYTYPE_Output() {
+	$parm0 = "";
+	$parm0 = $parm0."Complexity Type"."|"; # pagetitle
+	$parm0 = $parm0."dmwscomplexitytype"."|"; # primetable
+	$parm0 = $parm0."|"; # othertables
+	$parm0 = $parm0."dmwscomplexitytype_id|"; # keyfieldname
+	$parm0 = $parm0."dmwscomplexitytype_id|"; # sortfieldname
+	$parm0 = $parm0."20|"; # pagination
+	$parm0 = $parm0."No"; # enable add-copy
+	$parm1 = "";
+	$parm1 = $parm1."dmwscomplexitytype_id|Yes|Id|80|Yes|Complexity Type Id|KeyText,10,15^";
 	$parm1 = $parm1."dmwscomplexitytype_name|Yes|Name|80|Yes|Name|InputText,30,60^";
 	$parm1 = $parm1."dmwscomplexitytype_description|Yes|Description|80|Yes|Description|InputText,30,60^";
 	$parm1 = $parm1."dmwscomplexitytype_weighting|Yes|Weighting|80|Yes|Weighting|InputSelectFromList,0.5+1.0+1.5+2.0+2.5+3.0+3.5+4.0+4.5+5.0+5.5+6.0^";
-	$parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";                                                                                       
-	$parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";                                                                                        
-	GenericHandler_Output ($parm0,$parm1);                                                                                                                              
-}                                           
+	$parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";
+	$parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";
+	GenericHandler_Output ($parm0,$parm1);
+}
 
 function Dmws_SETUPDMWSSUPPORTTYPE_Output() {
 	$parm0 = "";
@@ -3149,7 +3262,7 @@ function Dmws_SETUPDMWSSUPPORTTYPE_Output() {
 	$parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";
 	$parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";
 	GenericHandler_Output ($parm0,$parm1);
-	
+
 }
 
 function Dmws_SETUPDMWSREFERRERORGTYPE_Output() {
@@ -3167,7 +3280,7 @@ function Dmws_SETUPDMWSREFERRERORGTYPE_Output() {
 	$parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";
 	$parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";
 	GenericHandler_Output ($parm0,$parm1);
-	
+
 }
 
 
@@ -3186,7 +3299,7 @@ function Dmws_SETUPDMWSOCCUPATIONALISSUETYPE_Output() {
     $parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";
     $parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";
     GenericHandler_Output ($parm0,$parm1);
-    
+
 }
 
 function Dmws_SETUPDMWSPREVIOUSOCCUPATIONTYPE_Output() {
@@ -3203,7 +3316,7 @@ function Dmws_SETUPDMWSPREVIOUSOCCUPATIONTYPE_Output() {
     $parm1 = $parm1."dmwspreviousoccupationtype_name|Yes|Previous Occupation Type|80|Yes|Name|InputText,10,21^";
     $parm1 = $parm1."generic_updatebutton|Yes|Update|70|No|Update|UpdateButton^";
     $parm1 = $parm1."generic_deletebutton|Yes|Delete|70|No|Delete|DeleteButton";
-    GenericHandler_Output ($parm0,$parm1);   
+    GenericHandler_Output ($parm0,$parm1);
 }
 
 function Dmws_DMWSTRELLO_Output() {
@@ -3216,9 +3329,9 @@ function Dmws_DMWSTRELLO_Output() {
     XLITXT("Frequently Asked Questions");
     X_UL();
     XBR();
-    XLINKBUTTONNEWWINDOW ("https://www.trello.com","Go to Trello","trello");  
+    XLINKBUTTONNEWWINDOW ("https://www.trello.com","Go to Trello","trello");
     XBR();XBR();
-    XPTXT("Tip: Save your Trello password in the browser to take you straight there"); 
+    XPTXT("Tip: Save your Trello password in the browser to take you straight there");
 }
 
 function Dmws_DMWSCLIENTSYNCHRONISE_Output() {
@@ -3232,7 +3345,7 @@ function Dmws_DMWSCLIENTSYNCHRONISE_Output() {
     XINHID("TestorReal","R");
     /*
     XBR();
-    XINRADIO("TestorReal","R","checked","");XTXT("Normal Synchronisation<BR>"); 
+    XINRADIO("TestorReal","R","checked","");XTXT("Normal Synchronisation<BR>");
     XBR();
     XTABLE();XTRODD();XTD();
     XINRADIO("TestorReal","T","","");XTXT("Test Mode (no updates made)<BR>");
@@ -3306,7 +3419,7 @@ function Dmws_DMWSCLIENTAPPSYNCHRONISE_Output() {
      XBR();
      X_TD();X_TR();X_TABLE();
      */
-    
+
     XBR();
     XINSUBMIT("Get Application Updates");
     XBR();XBR();
@@ -3364,8 +3477,8 @@ function Dmws_DMWSDATEFIX_Output ($testorreal) {
         //XH3($dmwssu_id);
         Get_Data('dmwssu',$dmwssu_id);
         if (($GLOBALS{'dmwssu_dmwscontractid'} == "Test")||($GLOBALS{'dmwssu_dmwscontractid'} == "Example")){
-            
-        } else {   
+
+        } else {
 
             /*
             foreach ($relevantdatesa as $fieldname){
@@ -3410,7 +3523,7 @@ function Dmws_DMWSDATEFIX_Output ($testorreal) {
                 }
             }
             */
-            
+
             /*$dmwsvisita = Get_Array('dmwsvisit',$dmwssu_id);
             foreach ($dmwsvisita as $dmwsvisit_id){
                 //XH3($dmwsvisit_id);
@@ -3455,7 +3568,7 @@ function Dmws_DMWSDATEFIX_Output ($testorreal) {
                 }
             }
             */
-            
+
             $dmwsprogressa = Get_Array('dmwsprogress',$dmwssu_id);
             foreach ($dmwsprogressa as $dmwsprogress_id) {
                 Get_Data('dmwsprogress',$dmwssu_id,$dmwsprogress_id);
@@ -3492,7 +3605,7 @@ function Dmws_DMWSDATEFIX_Output ($testorreal) {
                     Write_Data('dmwsprogress',$dmwssu_id,$dmwsprogress_id);
                 }
             }
-            
+
             /*
             $dmwsreferrerupdatea = Get_Array('dmwsreferrerupdate',$dmwssu_id);
             foreach ($dmwsreferrerupdatea as $dmwsreferrerupdate_id) {
@@ -3530,7 +3643,7 @@ function Dmws_DMWSDATEFIX_Output ($testorreal) {
                     Write_Data('dmwsreferrerupdate',$dmwssu_id,$dmwsreferrerupdate_id);
                 }
             }
-            
+
             $dmwsreferrala = Get_Array('dmwsreferral',$dmwssu_id);
             foreach ($dmwsreferrala as $dmwsreferral_id) {
                 Get_Data('dmwsreferral',$dmwssu_id,$dmwsreferral_id);
@@ -3561,7 +3674,7 @@ function Dmws_DMWSDATEFIX_Output ($testorreal) {
                             $GLOBALS{$fieldname} = $newdate;
                             $wrong = "1";
                         }
-                        
+
                     }
                 }*/
                 //XH3($GLOBALS{'dmwsreferral_consentdate'});
@@ -3595,7 +3708,7 @@ function Dmws_DMWSDATEFIX_Output ($testorreal) {
                 if ( ($wrong == "1" )&&($testorreal == "Real") ) {
                     Write_Data('dmwsreferral',$dmwssu_id,$dmwsreferral_id);
                 }
-                
+
             }*/
         }
     }
@@ -3612,7 +3725,7 @@ function Dmws_DMWSTIMEBANDFIX_CSSJS () {
 
 function Dmws_DMWSTIMEBANDFIX_Output ($testorreal) {
     //XH3($GLOBALS{'MPDFREPORTFILTER'});
-    
+
     function GetTimeBandList ($listfieldname,$timebandid) {
         // return hours
         $hours = "";
@@ -3631,27 +3744,27 @@ function Dmws_DMWSTIMEBANDFIX_Output ($testorreal) {
         if ( $hours == "0" ) { $hours = ""; }
         return $hours;
     }
-    
+
 
     // Here is some code that could be adapted to read the filter parameter string syntax
     $admissiontypeida = Array("dmwsvisit_timeslot","dmwsvisit_durationvisit","dmwsvisit_durationtel","dmwsvisit_durationresearch","dmwsvisit_durationtravel","dmwsvisit_durationfamily","dmwsvisit_durationbereavement","dmwsvisit_durationdeathviewing","dmwsvisit_durationstaffsupport","dmwsvisit_durationadmin");
     $timebandnamea = Array("Time Band","SU Visit","Telephone","Research","Travel","Family","Bereavement","Death Viewing","Staff Support","Admin etc");
 
     //XH3($formattedstartdate." ".$formattedenddate);
-    
+
     // Step 0 - colour palette
     $htc = "#FFFFFF"; // header text colour
     $hbc = "#808080"; // header background colour
     $rtc = "#000000"; // row text colour
     $rbc = "#f2f2f2"; // row background colour
-    
+
     //Step 2 - gather the data from the database
-    
+
     $timebandstatsa = Array();
     $relevantdmwssua = Array();
     $dmwssua = Get_Array('dmwssu');
     $opencasesa = Array();
-    
+
     //XH3($dmwscontracta);
     XDIV("reportdiv","container");
     XTABLEJQDTID("reporttable_list");
@@ -3670,7 +3783,7 @@ function Dmws_DMWSTIMEBANDFIX_Output ($testorreal) {
         Get_Data('dmwssu',$dmwssu_id);
         Get_Data('dmwssux',$dmwssu_id);
         $include = "0";
-        
+
         // this logic needs to be replaced by identifying whether this is the welfare officers case
         /*  $dmwscontractlocationa = Get_Array('dmwscontractlocation');
          foreach ($dmwscontractlocationa as $dmwscontractlocation_id) {
@@ -3684,8 +3797,8 @@ function Dmws_DMWSTIMEBANDFIX_Output ($testorreal) {
         $thiscontract = $GLOBALS{'dmwssu_dmwscontractid'};
         $thiscontractlocation = $GLOBALS{'dmwssu_dmwscontractlocationid'};
         $thiswo = $GLOBALS{'dmwssu_wopersonid'};
-        
-        
+
+
         if(($filtervaluea[2] == $thiscontract)&&($filtervaluea[3] == $thiscontractlocation)&&($filtervaluea[4] == $thiswo)){
             $include = "1";
         }
@@ -3708,15 +3821,15 @@ function Dmws_DMWSTIMEBANDFIX_Output ($testorreal) {
                                             XTDTXT($dmwssu_id);XTDTXT($GLOBALS{'dmwsvisit_date'});XTDTXT($dmwstimeband_id);XTDTXT($thiscontract);XTDTXT($fieldname);XTDTXT(GetTimeBandList($fieldname,$dmwstimeband_id));X_TR();
                                         }
                                     }
-                                    
+
                                 }
-                                
-                                
+
+
                         }
                     }
                 }
-                
-                
+
+
                 /*for ($i = 0; $i < 19; $i++){
                  if ($timebandstatsa[$dmwstimeband_id][$i] == null){
                  $timebandstatsa[$dmwstimeband_id][$i] = 0;
@@ -3724,15 +3837,15 @@ function Dmws_DMWSTIMEBANDFIX_Output ($testorreal) {
                  }*/
             }
         }
-        
+
     }
-    
+
     X_TBODY();
     X_TABLE();
     X_DIV("report_tablecontainer","container");
-    
-    
-    
+
+
+
 }
 
 
@@ -3743,29 +3856,29 @@ function Dmws_DMWSLOCATIONFIX_CSSJS () {
 
 function Dmws_DMWSLOCATIONFIX_Output ($testorreal) {
     //XH3($GLOBALS{'MPDFREPORTFILTER'});
-    
 
-    
-    
+
+
+
     // Here is some code that could be adapted to read the filter parameter string syntax
     $admissiontypeida = Array("dmwsvisit_timeslot","dmwsvisit_durationvisit","dmwsvisit_durationtel","dmwsvisit_durationresearch","dmwsvisit_durationtravel","dmwsvisit_durationfamily","dmwsvisit_durationbereavement","dmwsvisit_durationdeathviewing","dmwsvisit_durationstaffsupport","dmwsvisit_durationadmin");
     $timebandnamea = Array("Time Band","SU Visit","Telephone","Research","Travel","Family","Bereavement","Death Viewing","Staff Support","Admin etc");
-    
+
     //XH3($formattedstartdate." ".$formattedenddate);
-    
+
     // Step 0 - colour palette
     $htc = "#FFFFFF"; // header text colour
     $hbc = "#808080"; // header background colour
     $rtc = "#000000"; // row text colour
     $rbc = "#f2f2f2"; // row background colour
-    
+
     //Step 2 - gather the data from the database
-    
+
     $timebandstatsa = Array();
     $relevantdmwssua = Array();
     $dmwssua = Get_Array('dmwssu');
     $opencasesa = Array();
-    
+
     //XH3($dmwscontracta);
     XDIV("reportdiv","container");
     XTABLEJQDTID("reporttable_list");
@@ -3785,7 +3898,7 @@ function Dmws_DMWSLOCATIONFIX_Output ($testorreal) {
         Get_Data('dmwssu',$dmwssu_id);
         Get_Data('dmwssux',$dmwssu_id);
         $include = "0";
-        
+
         // this logic needs to be replaced by identifying whether this is the welfare officers case
         /*  $dmwscontractlocationa = Get_Array('dmwscontractlocation');
          foreach ($dmwscontractlocationa as $dmwscontractlocation_id) {
@@ -3802,8 +3915,8 @@ function Dmws_DMWSLOCATIONFIX_Output ($testorreal) {
         $formattedstartdate = "2018-08-01";
         $formattedenddate = "2018-08-31";
         $sname = $GLOBALS{'dmwssux_sname'};
-        
-        
+
+
         if(("MOD" == $thiscontract)&&("mboy" == $thiswo)){
             $include = "1";
         }
@@ -3826,15 +3939,15 @@ function Dmws_DMWSLOCATIONFIX_Output ($testorreal) {
                                             XTDTXT($dmwssu_id);XTDTXT($sname);XTDTXT($thiscontractlocation);XTDTXT($GLOBALS{'dmwsvisit_date'});XTDTXT($dmwstimeband_id);XTDTXT($fieldname);XTDTXT(GetTimeBandList($fieldname,$dmwstimeband_id));X_TR();
                                         }
                                     }
-                                    
+
                                 }
-                                
-                                
+
+
                         }
                     }
                 }
-                
-                
+
+
                 /*for ($i = 0; $i < 19; $i++){
                  if ($timebandstatsa[$dmwstimeband_id][$i] == null){
                  $timebandstatsa[$dmwstimeband_id][$i] = 0;
@@ -3842,9 +3955,9 @@ function Dmws_DMWSLOCATIONFIX_Output ($testorreal) {
                  }*/
             }
         }
-        
+
     }
-    
+
     X_TBODY();
     X_TABLE();
     X_DIV("report_tablecontainer","container");
@@ -3930,7 +4043,7 @@ function Dmws_DMWSMANDFIELDSFIX_Output ($testorreal) {
     $mandfieldsremainingnamesa['dmwsreferral_orgname'] = "Referral Organisation Name";
     $mandfieldsremainingnamesa['dmwsreferral_roleintervention'] = "Contact Details, Role & Intervention";
     $dmwssua = Get_Array('dmwssu');
-    
+
     XTABLEJQDTID("reporttable_locationlist");
     XTHEAD();
     XTRJQDT();
@@ -3947,7 +4060,7 @@ function Dmws_DMWSMANDFIELDSFIX_Output ($testorreal) {
         $fucounter = "0";
         $incompletevisitcounter = 0;
         Get_Data('dmwssu',$dmwssu_id);
-        Get_Data('dmwssux',$dmwssu_id); 
+        Get_Data('dmwssux',$dmwssu_id);
         //XH3($GLOBALS{'dmwssu_mandfieldsremaininglist'});
         $incompletefieldsa[$dmwssu_id] = Array();
         foreach ($dmwstimebanda as $dmwstimeband_id) {
@@ -3976,35 +4089,35 @@ function Dmws_DMWSMANDFIELDSFIX_Output ($testorreal) {
                     }
                 }
             }
-            
+
             if ($contcounter == "0"){
                 $incompletevisitcounter++;
             }
-            
+
             $contcounter = "0"; // <---- was '=='
-            
+
         }
         if ($incompletevisitcounter != 0){
             if ($incompletevisitcounter == 1){
                 array_push($incompletefieldsa[$dmwssu_id],"Contact Log");
             }
             else{array_push($incompletefieldsa[$dmwssu_id],"Contact Log X".$incompletevisitcounter);}
-            
+
         }
         //XH3($dmwssu_id." ----- ".$GLOBALS{'dmwssu_dmwsadmissionreasonid'});
         $dmwsreferrerupdatea = Get_Array('dmwsreferrerupdate',$dmwssu_id);
         $dmwsreferrala = Get_Array('dmwsreferral',$dmwssu_id);
-        
+
         if ($GLOBALS{'dmwssu_dmwssafeguardingissuelist'} == null){
             $nullsglist = "1";
         }
-        
+
         foreach ($mandfieldsa as $fieldname){
             $fielda = explode("_",$fieldname);
             if (($nullsglist == "1")&&(($fieldname == "dmwssu_safeguarding")||($fieldname == "dmwssu_dmwssafeguardeetypeid"))){
                 continue;
             }
-                        
+
             if ($fielda[0] == "dmwsreferrerupdate"){
                 foreach ($dmwsreferrerupdatea as $dmwsreferrerupdate_id) {
                     Get_Data('dmwsreferrerupdate',$dmwssu_id,$dmwsreferrerupdate_id);
@@ -4026,8 +4139,8 @@ function Dmws_DMWSMANDFIELDSFIX_Output ($testorreal) {
                     }
                 }
             }
-            
-            
+
+
             elseif ($fielda[0] == "dmwsreferral"){
                 foreach ($dmwsreferrala as $dmwsreferral_id) {
                     Get_Data('dmwsreferral',$dmwssu_id,$dmwsreferral_id);
@@ -4047,7 +4160,7 @@ function Dmws_DMWSMANDFIELDSFIX_Output ($testorreal) {
                     }
                 }
             }
-            
+
             elseif (($fielda[0] == "followup")){
                 if ($lastvisit_id != ""){
                 Get_Data('dmwsvisit',$dmwssu_id,$lastvisit_id);
@@ -4061,20 +4174,20 @@ function Dmws_DMWSMANDFIELDSFIX_Output ($testorreal) {
                     }
                 }
             }
-            
-            
+
+
             else{
                 if (strlen(strstr($fieldname,"date")) > 0){
                     if ($GLOBALS{$fieldname} == "0000-00-00"){
                         array_push($incompletefieldsa[$dmwssu_id],$mandfieldsremainingnamesa[$fieldname]);
                     }
                 }
-                
+
                 elseif (($GLOBALS{$fieldname} == null)||($GLOBALS{$fieldname} == "")){
                     array_push($incompletefieldsa[$dmwssu_id],$mandfieldsremainingnamesa[$fieldname]);
                 }
             }
-            
+
         }
         $list = implode(", ",$incompletefieldsa[$dmwssu_id]);
         if ($list != null){
@@ -4083,7 +4196,7 @@ function Dmws_DMWSMANDFIELDSFIX_Output ($testorreal) {
                 $GLOBALS{'dmwssu_mandfieldsremaininglist'} = $list;
                 Write_Data('dmwssu',$dmwssu_id);
                 $action = "<b>Updated";
-            }            
+            }
             XTRJQDT();
             XTDTXT($dmwssu_id);XTDTXT($list." ".$action);
             //print_r($incompletefieldsa);
@@ -4092,7 +4205,7 @@ function Dmws_DMWSMANDFIELDSFIX_Output ($testorreal) {
             X_TR();
         }
     }
-    
+
     X_TBODY();
     X_TABLE();
 }
@@ -4128,15 +4241,15 @@ function Dmws_DMWSCOMPLEXITYUTILITY_Output ($testorreal) {
         if (($firstchar != "0")&&(is_numeric($secondchar))){
             $newno = "0".$nokno;
             XTRJQDT();XTDTXT($dmwssu_id);XTDTXT("<font color=red>$nokno</font>");XTDTXT("<font color=green>$newno</font>");X_TR();
-            
+
             if ( $testorreal == "Real" ) {
                 $nokno = $GLOBALS{'dmwssu_nokcontacttel'} = $newno;
                 Write_Data('dmwssu',$dmwssu_id);
-            }   
+            }
         }
     }
-    
-    
+
+
     X_TBODY();
     X_TABLE();
 }
@@ -4196,7 +4309,7 @@ function Dmws_DMWSWELLBEINGFIX_Output ($testorreal) {
                     Delete_Data('dmwswellbeing',$dmwssu_id,$dmwswellbeing_dmwsvisitid);
                     XTDTXT("Empty wellbeing record deleted");
                 } else {
-                    XTDTXT("Empty wellbeing record would be deleted"); 
+                    XTDTXT("Empty wellbeing record would be deleted");
                 }
                 X_TR();
             } else {
@@ -4211,7 +4324,7 @@ function Dmws_DMWSWELLBEINGFIX_Output ($testorreal) {
                     } else {
                         XTDTXT("Error in Wellbeing Record Summary Field - ".$bigsum." vs ".$GLOBALS{'dmwswellbeing_score'}." - Would be Corrected");
                     }
-                    X_TR();                
+                    X_TR();
                 }
                 if ($bigsum != 0) {
                     if ($first == "1") {
@@ -4224,7 +4337,7 @@ function Dmws_DMWSWELLBEINGFIX_Output ($testorreal) {
             }
         }
         // ======== Now check that the correct summary information is stored in the dmwssu record. ====
-        
+
         if (($initialwellbeingscore != $GLOBALS{'dmwssu_initialwellbeingscore'})||($finalwellbeingscore != $GLOBALS{'dmwssu_finalwellbeingscore'})) {
             XTRJQDT();
             XTDTXT($dmwssu_id);
@@ -4237,10 +4350,10 @@ function Dmws_DMWSWELLBEINGFIX_Output ($testorreal) {
             } else {
                 XTDTXT("Error in SU Record Summary Fields - ".$initialwellbeingscore."|".$finalwellbeingscore." vs ".$GLOBALS{'dmwssu_initialwellbeingscore'}."|".$GLOBALS{'dmwssu_finalwellbeingscore'}." - Would be Corrected");
             }
-            X_TR();    
+            X_TR();
         }
-        
-        
+
+
     }
     X_TBODY();
     X_TABLE();

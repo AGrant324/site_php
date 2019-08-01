@@ -1,24 +1,24 @@
-<?php # 
-
-require_once('v1_globalroutines.php');
-require_once('v1_ioroutines.php');
-require_once('v1_personroutines.php');
-require_once('v1_webpageroutines.php');
-require_once('v1_bookingroutines.php');
-
-Get_Common_Parameters();
-GlobalRoutine();
-Booking_BOOKINGUPDATE_CSSJS();
-PageHeader("Default","Final");
-Back_Navigator();
-
-$invenue_code = $_REQUEST['venue_code'];
-$inbooking_id = $_REQUEST['booking_id'];
-$inmenulist = $_REQUEST['menulist'];
-
-Booking_BOOKINGUPDATE_Output ($invenue_code, $inbooking_id);
-
-Back_Navigator();
-PageFooter("Default","Final");
-
-
+<?php # 
+
+require_once('v1_globalroutines.php');
+require_once('v1_ioroutines.php');
+require_once('v1_personroutines.php');
+require_once('v1_webpageroutines.php');
+require_once('v1_bookingroutines.php');
+
+Get_Common_Parameters();
+GlobalRoutine();
+Booking_BOOKINGUPDATE_CSSJS();
+PageHeader("Default","Final");
+Back_Navigator();
+
+$invenue_code = $_REQUEST['venue_code'];
+$inbooking_id = $_REQUEST['booking_id'];
+$inmenulist = $_REQUEST['menulist'];
+
+Booking_BOOKINGUPDATE_Output ($invenue_code, $inbooking_id);
+
+Back_Navigator();
+PageFooter("Default","Final");
+
+

@@ -74,8 +74,8 @@ if ($uploaderrorcode == "0") {
 				Get_Data('corsite',$corsite_id,'Live');
 	 			$GLOBALS{'corsite_landregistrylink'} = $uploadcsva[$fieldindexa['corsite_landregistrylink']];
 	 			$GLOBALS{'corsite_landregistrylink'} = str_replace('https:','',$GLOBALS{'corsite_landregistrylink'});
-				if ($testorreal == "R") {
-					Write_Data('corsite',$corsite_id,'Live');
+				if ($testorreal == "R") {
+					Write_Data('corsite',$corsite_id,'Live');
 				}
 				XH4("========= updated site ======== ".$corsite_id." ".$GLOBALS{'corsite_site'});
 			}	
