@@ -2370,4 +2370,7 @@ function XPNORMAL($text){
 function XPLARGE($text){
   echo "<p class='largeText'>".$text."</p>";
 }
+
+# name, value, size, maxlength, placeholder
+function XINTXTP ($name,$value,$size,$maxLen,$placeholder) {echo '<input type="textbox" class="inputmain" name="'.$name.'" value="'.$value.'" size="'.$size.'" maxlength="'.$maxLen.'" placeholder="'.$placeholder.'">'."\n"; }
 ?>
