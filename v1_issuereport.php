@@ -12,21 +12,10 @@ PageHeader("Default","Final");
 Back_Navigator();
 
 
-XH2("Full Year Calendar Prototype");
+XH2("Issue reporting");
 XBR();
 BROW();
-BCOL("4");
-B_COL();
-ACTION_CAL_NAV();
 B_ROW();
-Action_CALENDARFULLLIST_Output();
-Action_CALENDARFULLYEAR_Output("horizontal");
-Action_CALENDARFULLYEAR_Output("vertical");
-//end of year view
-
-
-$calendarfilter = $_REQUEST['CalendarFilter'];
-Action_CALENDAR_Output($calendarfilter);
 
 Back_Navigator();
 PageFooter("Default","Final");
