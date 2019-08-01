@@ -16,7 +16,7 @@ XH2("Issue reporting");
 XBR();
 BROW();
 B_ROW();
-XFORM("php");
+XFORM("php","issueReport");
 X_FORM();
 
 Back_Navigator();
