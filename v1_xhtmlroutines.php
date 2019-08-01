@@ -2373,4 +2373,8 @@ function XPLARGE($text){
 
 # name, value, size, maxlength, placeholder
 function XINTXTP ($name,$value,$size,$maxLen,$placeholder) {echo '<input type="textbox" class="inputmain" name="'.$name.'" value="'.$value.'" size="'.$size.'" maxlength="'.$maxLen.'" placeholder="'.$placeholder.'">'."\n"; }
+
+function XLABEL($for,$value){
+  echo '<label for="'.$for.'">'.$value.'</label>';
+}
 ?>
