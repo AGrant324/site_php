@@ -356,7 +356,6 @@ function ACTION_CAL_NAV(){
 	}
 	// XTXT($url);
 	BCOLRIGHT("8");
-	XTXT("this is new text");
 	$link = YPGMLINK("calendarfulllistout.php").YPGMSTDPARMS();
 	XLINKBUTTONSPECIAL ($link,"Full List",$fl);
 	$link = YPGMLINK("calendarfullyearhout.php").YPGMSTDPARMS();
