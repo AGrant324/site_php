@@ -2371,8 +2371,8 @@ function XPLARGE($text){
   echo "<p class='largeText'>".$text."</p>";
 }
 
-# name, value, size, maxlength, placeholder
-function XINTXTP ($name,$value,$size,$maxLen,$placeholder) {echo '<input type="textbox" class="inputmain" name="'.$name.'" value="'.$value.'" size="'.$size.'" maxlength="'.$maxLen.'" placeholder="'.$placeholder.'">'."\n"; }
+# name, id, size, maxlength, placeholder
+function XINTXTP ($name,$id,$size,$maxLen,$placeholder) {echo '<input type="textbox" class="inputmain" name="'.$name.'" id="'.$id.'" size="'.$size.'" maxlength="'.$maxLen.'" placeholder="'.$placeholder.'">'."\n"; }
 
 function XLABELF($for,$value){
   echo '<label for="'.$for.'">'.$value.'</label>';
