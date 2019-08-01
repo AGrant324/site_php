@@ -18,7 +18,7 @@ BROW();
 B_ROW();
 XFORM("php","issueReport");
 #name, value, size, maxlength, placeholder
-XLABEL("Title","Title");
+XLABELF("Title","Title");
 XINTXTP("Title","","255","255","Issue title");
 X_FORM();
 
