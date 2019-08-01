@@ -16,6 +16,8 @@ XH2("Issue reporting");
 XBR();
 BROW();
 B_ROW();
+XFORM("php");
+X_FORM();
 
 Back_Navigator();
 PageFooter("Default","Final");
