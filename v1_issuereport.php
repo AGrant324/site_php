@@ -18,10 +18,22 @@ BROW();
 B_ROW();
 XFORM("php","issueReport");
 #name, value, size, maxlength, placeholder
+BROW();
+BCOL("2");
 XLABELF("Title","Title");
+B_COL();
+BCOL("2");
 XINTXTP("Title","Title","255","255","Issue title");
+B_COL();
+B_ROW();
+BROW();
+BCOL("2");
 XLABELF("Description","Description");
+B_COL();
+BCOL("2");
 XINTXTP("Description","Description","255","255","Description");
+B_COL();
+B_ROW();
 X_FORM();
 
 Back_Navigator();
