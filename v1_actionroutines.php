@@ -361,7 +361,7 @@ function ACTION_CAL_NAV(){
 	$link = YPGMLINK("calendarfullyearhout.php").YPGMSTDPARMS();
 	XLINKBUTTONSPECIAL ($link,"Year View 1",$v1);
 	$link = YPGMLINK("calendarfullyearvout.php").YPGMSTDPARMS();
-	XLINKBUTTONSPECIAL ($link,"Year View 2",$v2);
+	XLINKBUTTONSPECIAL ($link,"Yeagggr View 2",$v2);
 	$link = YPGMLINK("calendarfullyearout3.php").YPGMSTDPARMS();
 	XLINKBUTTONSPECIAL ($link,"Year View 3",$v3);
 	$link = YPGMLINK("calendarout.php").YPGMSTDPARMS();
